@@ -4,7 +4,7 @@ from qsub.subroutine_model import SubroutineModel
 from qsub.utils import consume_fraction_of_error_budget
 
 
-from qsub.quantum_algorithms.general_quantum_algorithms.quantum_linear_systems_algorithms import (
+from qsub.quantum_algorithms.general_quantum_algorithms.linear_systems import (
     TaylorQLSA,
     get_taylor_qlsa_num_block_encoding_calls,
 )
