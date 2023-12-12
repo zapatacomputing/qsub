@@ -1,6 +1,6 @@
 import pytest
 from src.qsub.subroutine_model import SubroutineModel
-from qsub.quantum_algorithms.general_quantum_algorithms.linear_systems import (
+from src.qsub.quantum_algorithms.general_quantum_algorithms.linear_systems import (
     TaylorQLSA,
     get_taylor_qlsa_num_block_encoding_calls,
 )
