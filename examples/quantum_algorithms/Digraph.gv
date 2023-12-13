@@ -1,7 +1,28 @@
 // Subroutines Hierarchy
 digraph {
+	LBMDragEstimation_estimate_drag_from_lbm [label="LBMDragEstimation
+(Task: estimate_drag_from_lbm)"]
+	QuantumAmplitudeEstimation_estimate_amplitude [label="QuantumAmplitudeEstimation
+(Task: estimate_amplitude)"]
+	LBMDragEstimation_estimate_drag_from_lbm -> QuantumAmplitudeEstimation_estimate_amplitude
+	LBMDragOperator_mark_drag_operator_subspace [label="LBMDragOperator
+(Task: mark_drag_operator_subspace)"]
+	QuantumAmplitudeEstimation_estimate_amplitude -> LBMDragOperator_mark_drag_operator_subspace
+	SphereBoundaryOracle_compute_boundary [label="SphereBoundaryOracle
+(Task: compute_boundary)"]
+	LBMDragOperator_mark_drag_operator_subspace -> SphereBoundaryOracle_compute_boundary
+	SubroutineModel_quantum_adder [label="SubroutineModel
+(Task: quantum_adder)"]
+	SphereBoundaryOracle_compute_boundary -> SubroutineModel_quantum_adder
+	SubroutineModel_quantum_comparator [label="SubroutineModel
+(Task: quantum_comparator)"]
+	SphereBoundaryOracle_compute_boundary -> SubroutineModel_quantum_comparator
+	SubroutineModel_quantum_square [label="SubroutineModel
+(Task: quantum_square)"]
+	SphereBoundaryOracle_compute_boundary -> SubroutineModel_quantum_square
 	TaylorQuantumODESolver_solve_quantum_ode [label="TaylorQuantumODESolver
 (Task: solve_quantum_ode)"]
+	QuantumAmplitudeEstimation_estimate_amplitude -> TaylorQuantumODESolver_solve_quantum_ode
 	ObliviousAmplitudeAmplification_amplify_amplitude [label="ObliviousAmplitudeAmplification
 (Task: amplify_amplitude)"]
 	TaylorQuantumODESolver_solve_quantum_ode -> ObliviousAmplitudeAmplification_amplify_amplitude
@@ -23,4 +44,13 @@ digraph {
 	SubroutineModel_block_encode_quadratic_term [label="SubroutineModel
 (Task: block_encode_quadratic_term)"]
 	CarlemanBlockEncoding_block_encode_carleman_linearization -> SubroutineModel_block_encode_quadratic_term
+	ODEHistoryBVector_prepare_ode_history_b_vector [label="ODEHistoryBVector
+(Task: prepare_ode_history_b_vector)"]
+	TaylorQLSA_solve_quantum_linear_system -> ODEHistoryBVector_prepare_ode_history_b_vector
+	SubroutineModel_prepare_inhomogeneous_term_vector [label="SubroutineModel
+(Task: prepare_inhomogeneous_term_vector)"]
+	ODEHistoryBVector_prepare_ode_history_b_vector -> SubroutineModel_prepare_inhomogeneous_term_vector
+	SubroutineModel_prepare_initial_vector [label="SubroutineModel
+(Task: prepare_initial_vector)"]
+	ODEHistoryBVector_prepare_ode_history_b_vector -> SubroutineModel_prepare_initial_vector
 }

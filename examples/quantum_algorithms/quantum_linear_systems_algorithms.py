@@ -9,9 +9,10 @@ from qsub.quantum_algorithms.general_quantum_algorithms.linear_systems import (
 from qsub.quantum_algorithms.general_quantum_algorithms.amplitude_amplification import (
     compute_number_of_grover_iterates_for_obl_amp,
 )
-from qsub.quantum_algorithms.differential_equation_solvers.ode_solvers import (
-    get_QLSA_parameters_for_taylor_ode,
-)
+
+# from qsub.quantum_algorithms.differential_equation_solvers.ode_solvers import (
+#     get_QLSA_parameters_for_taylor_ode,
+# )
 
 
 def make_psi_quantum_plot():
@@ -24,7 +25,7 @@ def make_psi_quantum_plot():
 
     # Compute Q* for each kappa
     Q_star_values = [
-        get_taylor_qlsa_num_block_encoding_calls(epsilon, alpha, kappa) / kappa
+        get_taylor_qlsa_num_block_encoding_calls(epsilon, alpha, kappa)[0] / kappa
         for kappa in kappa_values
     ]
 
@@ -45,71 +46,71 @@ def make_psi_quantum_plot():
 make_psi_quantum_plot()
 
 
-def cost_out_taylor_ode(
-    evolution_time,
-    total_failure_tolerance,
-    mu_P_A,
-    norm_b,
-    kappa_P,
-    norm_x_t,
-    A_stable,
-):
-    # Cost out algorithm without using SubroutineModel
+# def cost_out_taylor_ode(
+#     evolution_time,
+#     total_failure_tolerance,
+#     mu_P_A,
+#     norm_b,
+#     kappa_P,
+#     norm_x_t,
+#     A_stable,
+# ):
+#     # Cost out algorithm without using SubroutineModel
 
-    # Error budgeting
-    remaining_failure_tolerance = total_failure_tolerance
+#     # Error budgeting
+#     remaining_failure_tolerance = total_failure_tolerance
 
-    # Allot time discretization budget
-    (
-        time_discretization_failure_tolerance,
-        remaining_failure_tolerance,
-    ) = consume_fraction_of_error_budget(0.25, remaining_failure_tolerance)
-    # Consumption is related to discretization error as follows according to Eq. 29 of https://arxiv.org/abs/2309.07881
-    epsilon_td = time_discretization_failure_tolerance / 4
+#     # Allot time discretization budget
+#     (
+#         time_discretization_failure_tolerance,
+#         remaining_failure_tolerance,
+#     ) = consume_fraction_of_error_budget(0.25, remaining_failure_tolerance)
+#     # Consumption is related to discretization error as follows according to Eq. 29 of https://arxiv.org/abs/2309.07881
+#     epsilon_td = time_discretization_failure_tolerance / 4
 
-    # Allot amplitude amplification budget
-    (
-        amplification_failure_tolerance,
-        remaining_failure_tolerance,
-    ) = consume_fraction_of_error_budget(0.75, remaining_failure_tolerance)
+#     # Allot amplitude amplification budget
+#     (
+#         amplification_failure_tolerance,
+#         remaining_failure_tolerance,
+#     ) = consume_fraction_of_error_budget(0.75, remaining_failure_tolerance)
 
-    (
-        kappa_L,
-        omega_L,
-        state_preparation_probability,
-    ) = get_QLSA_parameters_for_taylor_ode(
-        evolution_time,
-        epsilon_td,
-        mu_P_A,
-        norm_b,
-        kappa_P,
-        norm_x_t,
-        A_stable,
-    )
+#     (
+#         kappa_L,
+#         omega_L,
+#         state_preparation_probability,
+#     ) = get_QLSA_parameters_for_taylor_ode(
+#         evolution_time,
+#         epsilon_td,
+#         mu_P_A,
+#         norm_b,
+#         kappa_P,
+#         norm_x_t,
+#         A_stable,
+#     )
 
-    # Allot quantum linear system algorithm budget
-    (
-        qlsa_failure_tolerance,
-        remaining_failure_tolerance,
-    ) = consume_fraction_of_error_budget(0.5, remaining_failure_tolerance)
-    # Consumption is related to discretization error as follows according to Eq. 29 of https://arxiv.org/abs/2309.07881
-    epsilon_ls = (
-        qlsa_failure_tolerance
-        * state_preparation_probability
-        / (2 + qlsa_failure_tolerance)
-    )
+#     # Allot quantum linear system algorithm budget
+#     (
+#         qlsa_failure_tolerance,
+#         remaining_failure_tolerance,
+#     ) = consume_fraction_of_error_budget(0.5, remaining_failure_tolerance)
+#     # Consumption is related to discretization error as follows according to Eq. 29 of https://arxiv.org/abs/2309.07881
+#     epsilon_ls = (
+#         qlsa_failure_tolerance
+#         * state_preparation_probability
+#         / (2 + qlsa_failure_tolerance)
+#     )
 
-    number_of_grover_iterates = compute_number_of_grover_iterates_for_obl_amp(
-        amplification_failure_tolerance, state_preparation_probability
-    )
+#     number_of_grover_iterates = compute_number_of_grover_iterates_for_obl_amp(
+#         amplification_failure_tolerance, state_preparation_probability
+#     )
 
-    number_of_qlsa_be_calls = get_taylor_qlsa_num_block_encoding_calls(
-        epsilon_ls, omega_L, kappa_L
-    )
+#     number_of_qlsa_be_calls = get_taylor_qlsa_num_block_encoding_calls(
+#         epsilon_ls, omega_L, kappa_L
+#     )
 
-    number_of_qlsa_sp_calls = 2 * number_of_qlsa_be_calls
+#     number_of_qlsa_sp_calls = 2 * number_of_qlsa_be_calls
 
-    total_number_of_qlsa_be_calls = number_of_grover_iterates * number_of_qlsa_be_calls
-    total_number_of_qlsa_sp_calls = number_of_grover_iterates * number_of_qlsa_sp_calls
+#     total_number_of_qlsa_be_calls = number_of_grover_iterates * number_of_qlsa_be_calls
+#     total_number_of_qlsa_sp_calls = number_of_grover_iterates * number_of_qlsa_sp_calls
 
-    return total_number_of_qlsa_be_calls, total_number_of_qlsa_sp_calls
+#     return total_number_of_qlsa_be_calls, total_number_of_qlsa_sp_calls

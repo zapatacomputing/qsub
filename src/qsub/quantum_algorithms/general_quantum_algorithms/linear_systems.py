@@ -5,6 +5,7 @@ import numpy as np
 from ...subroutine_model import SubroutineModel
 from typing import Optional
 import math
+from qsub.utils import consume_fraction_of_error_budget
 
 
 class TaylorQLSA(SubroutineModel):
@@ -13,6 +14,7 @@ class TaylorQLSA(SubroutineModel):
         task_name="solve_quantum_linear_system",
         requirements=None,
         linear_system_block_encoding: Optional[SubroutineModel] = None,
+        prepare_b_vector: Optional[SubroutineModel] = None,
     ):
         super().__init__(task_name, requirements)
 
@@ -22,6 +24,11 @@ class TaylorQLSA(SubroutineModel):
             self.linear_system_block_encoding = SubroutineModel(
                 "linear_system_block_encoding"
             )
+
+        if prepare_b_vector is not None:
+            self.prepare_b_vector = prepare_b_vector
+        else:
+            self.prepare_b_vector = SubroutineModel("prepare_b_vector")
 
     def set_requirements(
         self,
@@ -47,24 +54,36 @@ class TaylorQLSA(SubroutineModel):
 
     def populate_requirements_for_subroutines(self):
         # Allocate failure tolerance
-        allocation = 0.5
-        consumed_failure_tolerance = allocation * self.requirements["failure_tolerance"]
-        remaining_failure_tolerance = (
-            self.requirements["failure_tolerance"] - consumed_failure_tolerance
-        )
+        remaining_failure_tolerance = self.requirements["failure_tolerance"]
+        (
+            solve_linear_system_failure_tolerance,
+            remaining_failure_tolerance,
+        ) = consume_fraction_of_error_budget(0.5, remaining_failure_tolerance)
 
-        # Compute number of calls to block encoding of linear system
-        n_calls = get_taylor_qlsa_num_block_encoding_calls(
-            consumed_failure_tolerance,
+        (
+            linear_system_block_encoding_failure_tolerance,
+            remaining_failure_tolerance,
+        ) = consume_fraction_of_error_budget(0.5, remaining_failure_tolerance)
+
+        prepare_b_vector_failure_tolerance = remaining_failure_tolerance
+
+        # Compute number of calls to block encoding of linear system and b vector prep
+        (n_calls_to_A, n_calls_to_b) = get_taylor_qlsa_num_block_encoding_calls(
+            solve_linear_system_failure_tolerance,
             self.requirements["subnormalization"],
             self.requirements["condition_number"],
         )
-        self.linear_system_block_encoding.number_of_times_called = n_calls
+        self.linear_system_block_encoding.number_of_times_called = n_calls_to_A
+        self.prepare_b_vector.number_of_times_called = n_calls_to_b
 
         # Set block encoding requirements
-        block_encoding_failure_tolerance = remaining_failure_tolerance
         self.linear_system_block_encoding.set_requirements(
-            failure_tolerance=block_encoding_failure_tolerance,
+            failure_tolerance=linear_system_block_encoding_failure_tolerance,
+        )
+
+        # Set block encoding requirements
+        self.prepare_b_vector.set_requirements(
+            failure_tolerance=prepare_b_vector_failure_tolerance,
         )
 
 
@@ -80,7 +99,9 @@ def get_taylor_qlsa_num_block_encoding_calls(
         failure_probability: The tolerable probability of the algorithm failing due to
             approximation error in the solution state.
 
-    Returns: The number of block encoding calls.
+    Returns:
+        number_of_calls_to_A (float): The number of block encoding calls to A.
+        number_of_calls_to_b (float): The number of queries to state preparation of b.
     """
     if failure_probability > 0.24 or condition_number < math.sqrt(12):
         raise ValueError(
@@ -102,5 +123,10 @@ def get_taylor_qlsa_num_block_encoding_calls(
 
     Q_star = term1 * term2 + term3 * term4 + term5
 
-    number_of_calls = Q_star / (0.39 - 0.204 * failure_probability)
-    return number_of_calls
+    number_of_calls_to_A = Q_star / (0.39 - 0.204 * failure_probability)
+    number_of_calls_to_b = 2 * number_of_calls_to_A
+
+    return (
+        number_of_calls_to_A,
+        number_of_calls_to_b,
+    )
