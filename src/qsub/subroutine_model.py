@@ -4,6 +4,7 @@ from graphviz import Digraph
 from anytree import Node, RenderTree
 from anytree.exporter import DotExporter
 import plotly.graph_objects as go
+from sympy import symbols
 
 
 class SubroutineModel:
@@ -24,6 +25,9 @@ class SubroutineModel:
 
     def populate_requirements_for_subroutines(self):
         pass
+
+    def count_qubits(self):
+        return symbols(f"{self.task_name}_qubits")
 
     def run_profile(self, requirements=None):
         self.populate_requirements_for_subroutines()

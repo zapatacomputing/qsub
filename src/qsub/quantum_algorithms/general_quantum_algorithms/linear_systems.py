@@ -86,6 +86,10 @@ class TaylorQLSA(SubroutineModel):
             failure_tolerance=prepare_b_vector_failure_tolerance,
         )
 
+    def count_qubits(self):
+        # From Theorem 1 in https://arxiv.org/abs/2305.11352
+        return self.linear_system_block_encoding.count_qubits() + 6
+
 
 def get_taylor_qlsa_num_block_encoding_calls(
     failure_probability: float,

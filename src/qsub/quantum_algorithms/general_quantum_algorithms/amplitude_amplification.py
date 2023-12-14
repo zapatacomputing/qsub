@@ -76,6 +76,9 @@ class ObliviousAmplitudeAmplification(SubroutineModel):
             * remaining_failure_tolerance,
         )
 
+    def count_qubits(self):
+        return self.state_preparation_oracle.count_qubits()
+
 
 def compute_number_of_grover_iterates_for_obl_amp(
     failure_tolerance, input_state_squared_overlap

@@ -6,15 +6,6 @@ import math
 import warnings
 
 
-# Finish Drag Operator
-# Finish Boundary Oracle
-# Add in state preparation subroutines
-# X prepare_b_vector Taylor QLSA
-# - ODEHistoryBVector -> prepare_ode_history_b_vector
-# - prepare_inhomogeneous_term_vector
-# - prepare_initial_vector
-
-
 class ODEFinalTimePrep(SubroutineModel):
     def __init__(
         self,
@@ -75,6 +66,9 @@ class ODEFinalTimePrep(SubroutineModel):
             failure_tolerance=epsilon_ls,
         )
 
+    def count_qubits(self):
+        return self.prepare_ode_history_state.count_qubits()
+
 
 class TaylorQuantumODESolver(SubroutineModel):
     def __init__(
@@ -93,6 +87,7 @@ class TaylorQuantumODESolver(SubroutineModel):
     def set_requirements(
         self,
         evolution_time: float = None,
+        subnormalization_of_A: float = None,
         mu_P_A: float = None,
         kappa_P: float = None,
         failure_tolerance: float = None,
@@ -133,9 +128,11 @@ class TaylorQuantumODESolver(SubroutineModel):
             kappa_L,
             omega_L,
             state_preparation_probability,
+            n_ancilla_qubits,
         ) = get_QLSA_parameters_for_taylor_ode(
             self.requirements["evolution_time"],
             epsilon_td,
+            self.requirements["subnormalization_of_A"],
             self.requirements["mu_P_A"],
             self.requirements["norm_b"],
             self.requirements["kappa_P"],
@@ -165,19 +162,42 @@ class TaylorQuantumODESolver(SubroutineModel):
             self.requirements["qlsa_subroutine"]
         )
 
-        # Set a subset of requirements for qlsa
-        self.amplify_amplitude.state_preparation_oracle.prepare_ode_history_state.set_requirements(
-            subnormalization=omega_L, condition_number=kappa_L
-        )
-
         # Set qlsa b_vector_prep as ODEHistoryBVector()
         self.amplify_amplitude.state_preparation_oracle.prepare_ode_history_state = (
             self.requirements["qlsa_subroutine"]
         )
 
+        # Set qlsa block encoding subroutine as ODEHistoryBlockEncoding
+        self.amplify_amplitude.state_preparation_oracle.prepare_ode_history_state.linear_system_block_encoding = (
+            ODEHistoryBlockEncoding()
+        )
+
+        # TODO: finish this!
+        # omega_L = (1 + math.sqrt(taylor_truncation + 1) + subnormalization_of_A) / (
+        #     math.sqrt(taylor_truncation + 1) + 2
+        # )
+        # omega_L = (
+        #     self.amplify_amplitude.state_preparation_oracle.prepare_ode_history_state.linear_system_block_encoding.get_subnormalization()
+        # )
+        omega_L = 1.0
+        # Set a subset of requirements for qlsa
+        self.amplify_amplitude.state_preparation_oracle.prepare_ode_history_state.set_requirements(
+            subnormalization=omega_L, condition_number=kappa_L
+        )
+
+    def count_qubits(self):
+        return self.amplify_amplitude.count_qubits()
+
 
 def get_QLSA_parameters_for_taylor_ode(
-    evolution_time, epsilon_td, mu_P_A, norm_b, kappa_P, norm_x_t, A_stable
+    evolution_time,
+    epsilon_td,
+    subnormalization_of_A,
+    mu_P_A,
+    norm_b,
+    kappa_P,
+    norm_x_t,
+    A_stable,
 ):
     """
     Compute the parameters for the Q_QLSA function based on the theorem "Explicit query counts for ODE-solver".
@@ -185,6 +205,7 @@ def get_QLSA_parameters_for_taylor_ode(
     Arguments:
         evolution_time (float): Total time for the ODE solver.
         epsilon_td (float): Time discretization error.
+        subnormalization_of_A (float): subnormalization of block encoding for ODE matrix.
         mu_P_A (float): A parameter related to matrix A.
         norm_b (float): Norm of vector b.
         kappa_P (float): Condition number of the preconditioner used in the QLSA.
@@ -193,8 +214,9 @@ def get_QLSA_parameters_for_taylor_ode(
 
     Returns:
         kappa_L (float): The condition number bound.
-        subnormalization_of_A_block_encoding (float): subnormalization of block encoding for ODE matrix.
-        state_preparation_probability: (ideal) overlap squared of ODE solution state before amplitude amplification.
+        subnormalization_of_L (float): subnormalization of block encoding of ODE History block encoding.
+        state_preparation_probability: (float) overlap squared of ODE solution state before amplitude amplification.
+        n_ancilla_qubits: (int) number of ancilla qubits used for the clock and Taylor truncation
     """
     # Constants
     I_0_2 = 2.2796  # Approximation of I_0(2)
@@ -204,36 +226,41 @@ def get_QLSA_parameters_for_taylor_ode(
     # epsilon_td = failure_tolerance / 8
 
     # Step 2: Compute the Taylor truncation
-    x_star = max(
-        evolution_time
-        * e_constant**3
-        / epsilon_td
-        * (1 + evolution_time * e_constant**2 * norm_b / norm_x_t),
-        10,
+    taylor_truncation = compute_ode_taylor_truncation(
+        evolution_time, epsilon_td, norm_b, norm_x_t
     )
-    k = math.ceil(
-        (3 * math.log(x_star) / 2 + 1) / math.log(1 + math.log(x_star) / 2) - 1
-    )
+    # x_star = max(
+    #     evolution_time
+    #     * e_constant**3
+    #     / epsilon_td
+    #     * (1 + evolution_time * e_constant**2 * norm_b / norm_x_t),
+    #     10,
+    # )
+    # k = math.ceil(
+    #     (3 * math.log(x_star) / 2 + 1) / math.log(1 + math.log(x_star) / 2) - 1
+    # )
 
     # Step 3: Set the idling parameter p
-    if A_stable:
-        p = math.ceil(math.sqrt(evolution_time) / (k + 1)) * (k + 1)
-    else:
-        p = math.ceil(evolution_time / (k + 1)) * (k + 1)
+    p = set_ode_idling_parameter(evolution_time, taylor_truncation, A_stable)
+    # if A_stable:
+    #     p = math.ceil(math.sqrt(evolution_time) / (k + 1)) * (k + 1)
+    # else:
+    #     p = math.ceil(evolution_time / (k + 1)) * (k + 1)
 
     # Step 4: Compute subnormalization_of_A_block_encoding
-    subnormalization_of_A_block_encoding = (1 + math.sqrt(k + 1) + e_constant) / (
-        math.sqrt(k + 1) + 2
-    )
+    subnormalization_of_L_block_encoding = (
+        1 + math.sqrt(taylor_truncation + 1) + subnormalization_of_A
+    ) / (math.sqrt(taylor_truncation + 1) + 2)
 
     # Step 5: Compute the upper bound on the condition number kappa_L
     g_k = sum(
         [
             (
                 math.factorial(s)
-                * sum([1 / math.factorial(j) for j in range(s, k + 1)]) ** 2
+                * sum([1 / math.factorial(j) for j in range(s, taylor_truncation + 1)])
+                ** 2
             )
-            for s in range(1, k + 1)
+            for s in range(1, taylor_truncation + 1)
         ]
     )
     kappa_L = math.sqrt(
@@ -254,10 +281,10 @@ def get_QLSA_parameters_for_taylor_ode(
                 )
                 / ((1 - math.exp(2 * mu_P_A)) ** 2)
                 + p * (p + 1) / 2
-                + (p + evolution_time * k) * (I_0_2 - 1)
+                + (p + evolution_time * taylor_truncation) * (I_0_2 - 1)
             )
         )
-        * (math.sqrt(k + 1) + 2)
+        * (math.sqrt(taylor_truncation + 1) + 2)
     )
 
     # Step 6: Compute success probabilities Pr_H and Pr_F
@@ -279,12 +306,97 @@ def get_QLSA_parameters_for_taylor_ode(
 
     state_preparation_probability = Pr_F
 
-    return (
-        # epsilon_LS,
-        kappa_L,
-        subnormalization_of_A_block_encoding,
-        state_preparation_probability,
+    ancilla_qubits = math.ceil(
+        (math.log((evolution_time + 1) * (taylor_truncation + 1) + p, 2))
     )
+
+    return (
+        kappa_L,
+        subnormalization_of_L_block_encoding,
+        state_preparation_probability,
+        ancilla_qubits,
+    )
+
+
+def compute_ode_taylor_truncation(evolution_time, epsilon_td, norm_b, norm_x_t):
+    x_star = max(
+        evolution_time
+        * math.exp(3)
+        / epsilon_td
+        * (1 + evolution_time * math.exp(2) * norm_b / norm_x_t),
+        10,
+    )
+    return math.ceil(
+        (3 * math.log(x_star) / 2 + 1) / math.log(1 + math.log(x_star) / 2) - 1
+    )
+
+
+def set_ode_idling_parameter(evolution_time, taylor_truncation, A_stable):
+    if A_stable:
+        return math.ceil(math.sqrt(evolution_time) / (taylor_truncation + 1)) * (
+            taylor_truncation + 1
+        )
+    else:
+        return math.ceil(evolution_time / (taylor_truncation + 1)) * (
+            taylor_truncation + 1
+        )
+
+
+class ODEHistoryBlockEncoding(SubroutineModel):
+    def __init__(
+        self,
+        task_name="block_encode_ode_history_system",
+        requirements=None,
+        block_encode_ode_matrix: Optional[SubroutineModel] = None,
+    ):
+        super().__init__(task_name, requirements)
+
+        if block_encode_ode_matrix is not None:
+            self.block_encode_ode_matrix = block_encode_ode_matrix
+        else:
+            self.block_encode_ode_matrix = SubroutineModel("block_encode_ode_matrix")
+
+    def set_requirements(
+        self,
+        failure_tolerance: float = None,
+        evolution_time: float = None,
+        epsilon_td: float = None,
+        norm_b: float = None,
+        norm_x_t: float = None,
+    ):
+        args = locals()
+        # Clean up the args dictionary before setting requirements
+        args.pop("self")
+        args = {
+            k: v for k, v in args.items() if v is not None and not k.startswith("__")
+        }
+        # Initialize the requirements attribute if it doesn't exist
+        if not hasattr(self, "requirements"):
+            self.requirements = {}
+
+        # Update the requirements with new values
+        self.requirements.update(args)
+
+        # Call the parent class's set_requirements method with the updated requirements
+        super().set_requirements(**self.requirements)
+
+    def populate_requirements_for_subroutines(self):
+        remaining_failure_tolerance = self.requirements["failure_tolerance"]
+
+        # Set number of calls to the linear term block encoding
+        self.block_encode_ode_matrix.number_of_times_called = 1
+
+        # Set linear term block encoding requirements
+        self.block_encode_ode_matrix.set_requirements(
+            failure_tolerance=self.requirements["failure_tolerance"],
+        )
+
+    def get_subnormalization(self):
+        return None
+
+    def count_qubits(self):
+        # TODO: count (T+1)(k+1)+p ancilla qubits
+        return self.block_encode_ode_matrix.count_qubits()
 
 
 class CarlemanBlockEncoding(SubroutineModel):
@@ -442,6 +554,9 @@ class LBMDragEstimation(SubroutineModel):
             norm_x_t=self.requirements["norm_x_t"],
             A_stable=self.requirements["A_stable"],
         )
+
+    def count_qubits(self):
+        return self.estimate_amplitude.count_qubits()
 
 
 def compute_amp_est_error_from_block_encoding(estimation_error, failure_tolerance):
