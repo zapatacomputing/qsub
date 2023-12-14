@@ -24,6 +24,7 @@ from qsub.quantum_algorithms.differential_equation_solvers.ode_solvers import (
 def generate_graphs():
     evolution_time = 10000  # Example value
     failure_tolerance = 1e-10  # Example value
+    subnormalization_of_A = 1.0
     mu_P_A = -0.001
     norm_b = 0.0  # Example value
     norm_x_t = 1.0  # Example value
@@ -43,7 +44,9 @@ def generate_graphs():
     taylor_ode = TaylorQuantumODESolver(
         amplify_amplitude=ObliviousAmplitudeAmplification(),
     )
-    taylor_ode.set_requirements(qlsa_subroutine=taylor_qlsa)
+    taylor_ode.set_requirements(
+        subnormalization_of_A=subnormalization_of_A, qlsa_subroutine=taylor_qlsa
+    )
 
     sphere_oracle = SphereBoundaryOracle()
     sphere_oracle.set_requirements(radius=radius, grid_spacing=grid_spacing)
@@ -78,6 +81,8 @@ def generate_graphs():
     print("Counts of subtasks:")
     for key, value in counts.items():
         print(f"'{key}': {value},")
+
+    print("qubits =", drag_est.count_qubits())
 
     graph = drag_est.display_hierarchy()
     graph.view()  # This will open the generated diagram

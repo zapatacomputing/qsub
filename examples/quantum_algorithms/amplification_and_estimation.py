@@ -18,6 +18,8 @@ def example_quantum_amplitude_estimation():
     amp_est.run_profile()
     amp_est.print_profile()
 
+    print("qubits =", amp_est.count_qubits())
+
     return print(amp_est.count_subroutines())
 
 
