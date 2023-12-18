@@ -8,8 +8,11 @@ from qsub.quantum_algorithms.general_quantum_algorithms.linear_systems import (
 from qsub.quantum_algorithms.general_quantum_algorithms.amplitude_amplification import (
     ObliviousAmplitudeAmplification,
 )
-from qsub.quantum_algorithms.differential_equation_solvers.ode_solvers import (
+from qsub.quantum_algorithms.differential_equation_solvers.linear_ode_solvers import (
     TaylorQuantumODESolver,
+)
+
+from qsub.quantum_algorithms.differential_equation_solvers.linearization_methods import (
     CarlemanBlockEncoding,
 )
 
@@ -30,7 +33,7 @@ def generate_plot_for_taylor_quantum_ode():
         for time in time_list:
             evolution_time = time  # Example value
             failure_tolerance = 1e-10  # Example value
-            norm_b = 0.0  # Example value
+            norm_inhomogeneous_term_vector = 0.0  # Example value
             norm_x_t = 1.0  # Example value
             A_stable = True
             kappa_P = 1
@@ -39,7 +42,7 @@ def generate_plot_for_taylor_quantum_ode():
             taylor_ode = TaylorQuantumODESolver(
                 amplify_amplitude=ObliviousAmplitudeAmplification(),
             )
-            qlsa_subroutine = TaylorQLSA(
+            solve_linear_system = TaylorQLSA(
                 linear_system_block_encoding=CarlemanBlockEncoding()
             )
 
@@ -48,10 +51,10 @@ def generate_plot_for_taylor_quantum_ode():
                 mu_P_A,
                 kappa_P,
                 failure_tolerance,
-                norm_b,
+                norm_inhomogeneous_term_vector,
                 norm_x_t,
                 A_stable,
-                qlsa_subroutine,
+                solve_linear_system,
             )
 
             # Run the solver and get the query count
@@ -98,7 +101,7 @@ def generate_graphs():
     evolution_time = 10000  # Example value
     failure_tolerance = 1e-10  # Example value
     mu_P_A = -0.001
-    norm_b = 0.0  # Example value
+    norm_inhomogeneous_term_vector = 0.0  # Example value
     norm_x_t = 1.0  # Example value
     A_stable = True
     kappa_P = 1
@@ -107,17 +110,19 @@ def generate_graphs():
     taylor_ode = TaylorQuantumODESolver(
         amplify_amplitude=ObliviousAmplitudeAmplification(),
     )
-    qlsa_subroutine = TaylorQLSA(linear_system_block_encoding=CarlemanBlockEncoding())
+    solve_linear_system = TaylorQLSA(
+        linear_system_block_encoding=CarlemanBlockEncoding()
+    )
 
     taylor_ode.set_requirements(
         evolution_time,
         mu_P_A,
         kappa_P,
         failure_tolerance,
-        norm_b,
+        norm_inhomogeneous_term_vector,
         norm_x_t,
         A_stable,
-        qlsa_subroutine,
+        solve_linear_system,
     )
 
     # Run the solver and get the query count
