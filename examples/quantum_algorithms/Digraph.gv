@@ -38,9 +38,15 @@ digraph {
 	ODEHistoryBlockEncoding_block_encode_ode_history_system [label="ODEHistoryBlockEncoding
 (Task: block_encode_ode_history_system)"]
 	TaylorQLSA_solve_quantum_linear_system -> ODEHistoryBlockEncoding_block_encode_ode_history_system
-	SubroutineModel_block_encode_ode_matrix [label="SubroutineModel
-(Task: block_encode_ode_matrix)"]
-	ODEHistoryBlockEncoding_block_encode_ode_history_system -> SubroutineModel_block_encode_ode_matrix
+	CarlemanBlockEncoding_block_encode_carleman_linearization [label="CarlemanBlockEncoding
+(Task: block_encode_carleman_linearization)"]
+	ODEHistoryBlockEncoding_block_encode_ode_history_system -> CarlemanBlockEncoding_block_encode_carleman_linearization
+	SubroutineModel_block_encode_linear_term [label="SubroutineModel
+(Task: block_encode_linear_term)"]
+	CarlemanBlockEncoding_block_encode_carleman_linearization -> SubroutineModel_block_encode_linear_term
+	SubroutineModel_block_encode_quadratic_term [label="SubroutineModel
+(Task: block_encode_quadratic_term)"]
+	CarlemanBlockEncoding_block_encode_carleman_linearization -> SubroutineModel_block_encode_quadratic_term
 	ODEHistoryBVector_prepare_ode_history_b_vector [label="ODEHistoryBVector
 (Task: prepare_ode_history_b_vector)"]
 	TaylorQLSA_solve_quantum_linear_system -> ODEHistoryBVector_prepare_ode_history_b_vector
