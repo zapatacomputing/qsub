@@ -33,8 +33,7 @@ class TaylorQLSA(SubroutineModel):
     def set_requirements(
         self,
         failure_tolerance: float = None,
-        subnormalization: float = None,
-        condition_number: float = None,
+        # condition_number: float = None,
     ):
         args = locals()
         # Clean up the args dictionary before setting requirements
@@ -67,11 +66,15 @@ class TaylorQLSA(SubroutineModel):
 
         prepare_b_vector_failure_tolerance = remaining_failure_tolerance
 
+        subnormalization = self.linear_system_block_encoding.get_subnormalization()
+        condition_number = self.linear_system_block_encoding.get_condition_number()
+
         # Compute number of calls to block encoding of linear system and b vector prep
         (n_calls_to_A, n_calls_to_b) = get_taylor_qlsa_num_block_encoding_calls(
             solve_linear_system_failure_tolerance,
-            self.requirements["subnormalization"],
-            self.requirements["condition_number"],
+            subnormalization,
+            condition_number,
+            # self.requirements["condition_number"],
         )
         self.linear_system_block_encoding.number_of_times_called = n_calls_to_A
         self.prepare_b_vector.number_of_times_called = n_calls_to_b

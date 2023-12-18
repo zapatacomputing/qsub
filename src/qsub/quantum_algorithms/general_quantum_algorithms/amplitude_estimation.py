@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Optional
 from ...subroutine_model import SubroutineModel
+import warnings
 
 
 class QuantumAmplitudeEstimation(SubroutineModel):
@@ -85,3 +86,9 @@ def compute_number_of_grover_iterates_for_amp_est(failure_tolerance, estimation_
     number_of_grover_iterates = np.log(1 / failure_tolerance) / estimation_error
 
     return number_of_grover_iterates
+
+
+def compute_amp_est_error_from_block_encoding(estimation_error, failure_tolerance):
+    warnings.warn("This function is not fully implemented.", UserWarning)
+    amplitude_estimation_error = 0.1
+    return amplitude_estimation_error
