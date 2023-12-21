@@ -11,15 +11,12 @@ digraph {
 	SphereBoundaryOracle_compute_boundary [label="SphereBoundaryOracle
 (Task: compute_boundary)"]
 	LBMDragOperator_mark_drag_operator_subspace -> SphereBoundaryOracle_compute_boundary
-	SubroutineModel_quantum_adder [label="SubroutineModel
-(Task: quantum_adder)"]
-	SphereBoundaryOracle_compute_boundary -> SubroutineModel_quantum_adder
 	SubroutineModel_quantum_comparator [label="SubroutineModel
 (Task: quantum_comparator)"]
 	SphereBoundaryOracle_compute_boundary -> SubroutineModel_quantum_comparator
-	SubroutineModel_quantum_square [label="SubroutineModel
-(Task: quantum_square)"]
-	SphereBoundaryOracle_compute_boundary -> SubroutineModel_quantum_square
+	SubroutineModel_quantum_sum_of_squares [label="SubroutineModel
+(Task: quantum_sum_of_squares)"]
+	SphereBoundaryOracle_compute_boundary -> SubroutineModel_quantum_sum_of_squares
 	TaylorQuantumODESolver_solve_quantum_ode [label="TaylorQuantumODESolver
 (Task: solve_quantum_ode)"]
 	QuantumAmplitudeEstimation_estimate_amplitude -> TaylorQuantumODESolver_solve_quantum_ode
