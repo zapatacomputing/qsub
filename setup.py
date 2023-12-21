@@ -30,7 +30,7 @@ setup(
         "python-dateutil==2.8.2",
         "six==1.16.0",
         "tenacity==8.2.3",
-        "tomli==2.0.1,",
+        "tomli==2.0.1",
     ],
     entry_points={
         "console_scripts": [
