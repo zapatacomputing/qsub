@@ -1,9 +1,6 @@
 from typing import Optional
 from ...subroutine_model import SubroutineModel
 from qsub.utils import consume_fraction_of_error_budget
-from qsub.quantum_algorithms.general_quantum_algorithms.amplitude_estimation import (
-    compute_amp_est_error_from_block_encoding,
-)
 import warnings
 
 
@@ -23,14 +20,13 @@ class LBMDragEstimation(SubroutineModel):
 
         # Initialize the sub-subtask requirements as generic subroutines with task names
         self.requirements["solve_quantum_ode"] = SubroutineModel("solve_quantum_ode")
-        self.requirements["block_encode_drag_operator"] = SubroutineModel(
-            "block_encode_drag_operator"
-        )
+        self.requirements["mark_drag_vector"] = SubroutineModel("mark_drag_vector")
 
     def set_requirements(
         self,
         failure_tolerance: float = None,
         estimation_error: float = None,
+        estimated_drag_force: float = None,
         evolution_time: float = None,
         mu_P_A: float = None,
         kappa_P: float = None,
@@ -38,7 +34,7 @@ class LBMDragEstimation(SubroutineModel):
         norm_x_t: float = None,
         A_stable: bool = None,
         solve_quantum_ode: Optional[SubroutineModel] = None,
-        block_encode_drag_operator: Optional[SubroutineModel] = None,
+        mark_drag_vector: Optional[SubroutineModel] = None,
     ):
         args = locals()
         # Clean up the args dictionary before setting requirements
@@ -69,27 +65,14 @@ class LBMDragEstimation(SubroutineModel):
         # Rather, it properly allocates requirements and subroutines
         # to the subtasks of amplitude estimation
 
-        block_encode_drag_operator = self.requirements["block_encode_drag_operator"]
+        mark_drag_vector = self.requirements["mark_drag_vector"]
         solve_quantum_ode = self.requirements["solve_quantum_ode"]
-        # Set number of calls to the amplitude estimation task to one
-        self.estimate_amplitude.number_of_times_called = 1
-
-        amplitude_estimation_error = compute_amp_est_error_from_block_encoding(
-            self.requirements["estimation_error"],
-            block_encode_drag_operator.get_subnormalization(),
-        )
-
-        # Set amp est requirements
-        self.estimate_amplitude.set_requirements(
-            estimation_error=amplitude_estimation_error,
-            failure_tolerance=self.requirements["failure_tolerance"],
-        )
 
         # Set amp est st prep subroutine as ode solver
         self.estimate_amplitude.state_preparation_oracle = solve_quantum_ode
 
-        # Set amp est mark subspace subroutine as block_encode_drag_operator
-        self.estimate_amplitude.mark_subspace = block_encode_drag_operator
+        # Set amp est mark subspace subroutine as mark_drag_vector
+        self.estimate_amplitude.mark_subspace = mark_drag_vector
 
         # Set final_state_prep requirements
         self.estimate_amplitude.state_preparation_oracle.set_requirements(
@@ -103,14 +86,39 @@ class LBMDragEstimation(SubroutineModel):
             A_stable=self.requirements["A_stable"],
         )
 
+        # Set number of calls to the amplitude estimation task to one
+        self.estimate_amplitude.number_of_times_called = 1
+
+        # The QAE amplitude is the square of the estimate of interest
+        # and is scaled by known normalization factors in the vectors that encode the
+        # initial state and the mark state. One consequence of the square relationship
+        # is that the amplitude estimation error is now dependent on the quantity that
+        # is to be estimated. This is because smaller amplitudes mean that the square root
+        # operation increasingly expands the relative error.
+        # TODO: add equation reference from notes on drag estimation
+        amplitude_estimation_error = (
+            self.requirements["estimation_error"]
+            * (2 * self.requirements["estimated_drag_force"])
+            / (
+                self.estimate_amplitude.mark_subspace.get_normalization_factor()
+                * self.estimate_amplitude.state_preparation_oracle.get_normalization_factor()
+            )
+        )
+
+        # Set amp est requirements
+        self.estimate_amplitude.set_requirements(
+            estimation_error=amplitude_estimation_error,
+            failure_tolerance=self.requirements["failure_tolerance"],
+        )
+
     def count_qubits(self):
         return self.estimate_amplitude.count_qubits()
 
 
-class LBMDragOperator(SubroutineModel):
+class LBMDragReflection(SubroutineModel):
     def __init__(
         self,
-        task_name="mark_drag_operator_subspace",
+        task_name="mark_drag_vector",
         requirements=None,
         compute_boundary: Optional[SubroutineModel] = None,
     ):
@@ -150,7 +158,8 @@ class LBMDragOperator(SubroutineModel):
             failure_tolerance=self.requirements["failure_tolerance"],
         )
 
-    def get_subnormalization(self):
+    def get_normalization_factor(self):
+        # Returns the normalization factor for the vector encoding the marked state
         warnings.warn("This function is not fully implemented.", UserWarning)
         return 42
 
