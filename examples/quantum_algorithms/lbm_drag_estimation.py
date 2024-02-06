@@ -18,7 +18,7 @@ from qsub.quantum_algorithms.differential_equation_solvers.linear_ode_solvers im
 
 from qsub.quantum_algorithms.fluid_dynamics.lattice_boltzmann import (
     LBMDragEstimation,
-    LBMDragOperator,
+    LBMDragReflection,
     SphereBoundaryOracle,
 )
 
@@ -29,6 +29,7 @@ from qsub.quantum_algorithms.differential_equation_solvers.linearization_methods
 
 def generate_graphs():
     evolution_time = 10000  # Example value
+    drag_force = 0.0001  # Example value
     failure_tolerance = 1e-10  # Example value
     mu_P_A = -0.001
     norm_inhomogeneous_term_vector = 0.0  # Example value
@@ -60,12 +61,13 @@ def generate_graphs():
 
     sphere_oracle = SphereBoundaryOracle()
     sphere_oracle.set_requirements(radius=radius, grid_spacing=grid_spacing)
-    block_encode_drag_operator = LBMDragOperator(compute_boundary=sphere_oracle)
+    mark_drag_vector = LBMDragReflection(compute_boundary=sphere_oracle)
 
     drag_est = LBMDragEstimation(estimate_amplitude=QuantumAmplitudeEstimation())
     drag_est.set_requirements(
         evolution_time=evolution_time,
         estimation_error=estimation_error,
+        estimated_drag_force=drag_force,
         mu_P_A=mu_P_A,
         kappa_P=kappa_P,
         failure_tolerance=failure_tolerance,
@@ -73,7 +75,7 @@ def generate_graphs():
         norm_x_t=norm_x_t,
         A_stable=A_stable,
         solve_quantum_ode=taylor_ode,
-        block_encode_drag_operator=block_encode_drag_operator,
+        mark_drag_vector=mark_drag_vector,
     )
     # print(
     #     "QLSA is:",
