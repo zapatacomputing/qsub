@@ -1,13 +1,8 @@
 from setuptools import setup, find_packages
 
-# with open("requirements.txt") as f:
-#     install_requires = f.read().splitlines()
-
-# print(install_requires)
-
 setup(
     name="qsub",
-    version="0.1",
+    version="0.2",  # Update the version number as necessary
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[
@@ -22,7 +17,7 @@ setup(
         "matplotlib==3.8.2",
         "numpy==1.25.2",
         "packaging==23.2",
-        "Pillow==10.1.0",
+        "Pillow==10.2.0",  # Ensure this matches your requirements
         "plotly==5.18.0",
         "pluggy==1.3.0",
         "pyparsing==3.1.1",
@@ -30,11 +25,17 @@ setup(
         "python-dateutil==2.8.2",
         "six==1.16.0",
         "tenacity==8.2.3",
-        "tomli==2.0.1,",
+        "tomli==2.0.1",
     ],
+    extras_require={
+        "dev": [
+            # List any additional packages that are required for development
+            # "SomeDevPackage==version",
+        ]
+    },
     entry_points={
         "console_scripts": [
-            "qsub_cli=qsub.main:hello",
+            "qsub_cli=qsub.main:hello",  # Adjust as necessary for your package
         ],
     },
 )
