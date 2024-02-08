@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 from qsub.subroutine_model import SubroutineModel
 
@@ -102,10 +101,7 @@ def generate_graphs():
     print("qubits =", drag_est.count_qubits())
 
     graph = drag_est.display_hierarchy()
-    graph.view()  # This will open the generated diagram
-
-    # Add child subroutines to drag_est...
-    # drag_est.plot_graph()
+    graph.view(cleanup=True)  # This will open the generated diagram
 
 
 generate_graphs()
