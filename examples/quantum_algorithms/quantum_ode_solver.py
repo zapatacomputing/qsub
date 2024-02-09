@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
 
 from qsub.quantum_algorithms.general_quantum_algorithms.linear_systems import (
@@ -16,8 +17,13 @@ from qsub.quantum_algorithms.differential_equation_solvers.linearization_methods
     CarlemanBlockEncoding,
 )
 
+from qsub.generic_block_encoding import GenericLinearSystemBlockEncoding
+
 
 def generate_plot_for_taylor_quantum_ode():
+
+    warnings.warn("This function is not currently working.", UserWarning)
+
     # Provided data and new mu_P_A values to loop over
     time_list = [(10 ** (i + 3)) for i in range(8)]
     mu_P_A_values = [
@@ -94,9 +100,6 @@ def generate_plot_for_taylor_quantum_ode():
     plt.show()
 
 
-# generate_plot_for_taylor_quantum_ode()
-
-
 def generate_graphs():
     evolution_time = 10000  # Example value
     failure_tolerance = 1e-10  # Example value
@@ -110,8 +113,15 @@ def generate_graphs():
     taylor_ode = TaylorQuantumODESolver(
         amplify_amplitude=ObliviousAmplitudeAmplification(),
     )
-    solve_linear_system = TaylorQLSA(
-        linear_system_block_encoding=CarlemanBlockEncoding()
+    taylor_qlsa = TaylorQLSA()
+
+    generic_block_encoding = GenericLinearSystemBlockEncoding(
+        "linear_system_block_encoding"
+    )
+    generic_block_encoding.set_requirements(
+        kappa_P=kappa_P,
+        mu_P_A=mu_P_A,
+        A_stable=A_stable,
     )
 
     taylor_ode.set_requirements(
@@ -122,7 +132,8 @@ def generate_graphs():
         norm_inhomogeneous_term_vector,
         norm_x_t,
         A_stable,
-        solve_linear_system,
+        solve_linear_system=taylor_qlsa,
+        ode_matrix_block_encoding=generic_block_encoding,
     )
 
     # Run the solver and get the query count
@@ -130,7 +141,6 @@ def generate_graphs():
     taylor_ode.print_profile()
 
     # Add child subroutines to root_subroutine...
-    # taylor_ode.create_tree()
     print()
     print("Tree of subtasks and subroutines:")
     taylor_ode.display_tree()
@@ -140,12 +150,6 @@ def generate_graphs():
     print("Counts of subtasks:")
     for key, value in counts.items():
         print(f"'{key}': {value},")
-
-    # graph = taylor_ode.display_hierarchy()
-    # graph.view()  # This will open the generated diagram
-
-    # Add child subroutines to taylor_ode...
-    # taylor_ode.plot_graph()
 
 
 generate_graphs()
