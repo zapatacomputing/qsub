@@ -4,7 +4,7 @@ from ...subroutine_model import SubroutineModel
 import warnings
 
 
-class QuantumAmplitudeEstimation(SubroutineModel):
+class CoherentQuantumAmplitudeEstimation(SubroutineModel):
     def __init__(
         self,
         task_name="estimate_amplitude",
@@ -61,8 +61,10 @@ class QuantumAmplitudeEstimation(SubroutineModel):
 
         # Compute number of Grover iterates needed
         number_of_grover_iterates = (
-            compute_number_of_grover_iterates_for_quantum_amp_est(
-                consumed_failure_tolerance, self.requirements["estimation_error"]
+            compute_number_of_grover_iterates_for_coherent_quantum_amp_est(
+                consumed_failure_tolerance,
+                self.requirements["estimation_error"],
+                self.requirements["amplitude"],
             )
         )
 
@@ -88,12 +90,14 @@ class QuantumAmplitudeEstimation(SubroutineModel):
         return self.state_preparation_oracle.count_qubits()
 
 
-def compute_number_of_grover_iterates_for_quantum_amp_est(estimation_error, amplitude):
-    # Compute number of Grover iterates needed for oblivious amplitude amplification
-    # From https://arxiv.org/abs/quant-ph/0005055
+def compute_number_of_grover_iterates_for_coherent_quantum_amp_est(
+    failure_tolerance, estimation_error, amplitude=0.5
+):
+    # Compute number of Grover iterates needed for standard amplitude amplification
+    # from https://arxiv.org/abs/quant-ph/0005055 combined with Appendix C of https://arxiv.org/abs/quant-ph/9708016
     number_of_grover_iterates = (
         np.pi * np.sqrt(amplitude * (1 - amplitude)) / (2 * estimation_error)
-    )
+    ) * (1 / (2 * failure_tolerance) + 1 / 2)
 
     return number_of_grover_iterates
 

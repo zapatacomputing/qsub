@@ -9,7 +9,7 @@ from qsub.quantum_algorithms.general_quantum_algorithms.amplitude_amplification 
     ObliviousAmplitudeAmplification,
 )
 from qsub.quantum_algorithms.general_quantum_algorithms.amplitude_estimation import (
-    QuantumAmplitudeEstimation,
+    CoherentQuantumAmplitudeEstimation,
 )
 from qsub.quantum_algorithms.differential_equation_solvers.linear_ode_solvers import (
     TaylorQuantumODESolver,
@@ -62,7 +62,9 @@ def generate_graphs():
     sphere_oracle.set_requirements(radius=radius, grid_spacing=grid_spacing)
     mark_drag_vector = LBMDragReflection(compute_boundary=sphere_oracle)
 
-    drag_est = LBMDragEstimation(estimate_amplitude=QuantumAmplitudeEstimation())
+    drag_est = LBMDragEstimation(
+        estimate_amplitude=CoherentQuantumAmplitudeEstimation()
+    )
     drag_est.set_requirements(
         evolution_time=evolution_time,
         estimation_error=estimation_error,
