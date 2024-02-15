@@ -64,7 +64,7 @@ class CoherentQuantumAmplitudeEstimation(SubroutineModel):
             compute_number_of_grover_iterates_for_coherent_quantum_amp_est(
                 consumed_failure_tolerance,
                 self.requirements["estimation_error"],
-                self.requirements["amplitude"],
+                amplitude=self.requirements["amplitude"],
             )
         )
 
