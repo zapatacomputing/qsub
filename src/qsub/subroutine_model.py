@@ -4,6 +4,7 @@ from graphviz import Digraph
 from anytree import Node, RenderTree
 from anytree.exporter import DotExporter
 import plotly.graph_objects as go
+from sympy import symbols
 
 
 class SubroutineModel:
@@ -25,12 +26,29 @@ class SubroutineModel:
     def populate_requirements_for_subroutines(self):
         pass
 
-    def run_profile(self, requirements=None):
+    def count_qubits(self):
+        # For a generic SubroutineModel object, a symbol with the task name is returned
+        # for the number of qubits
+        return symbols(f"{self.task_name}_qubits")
+
+    def run_profile(self, verbose=False):
+        # Recursively populate requirements for subroutines
+
+        if verbose:
+            # If verbose, print the task name and requirements before populating.
+            print(
+                "Running profile for",
+                self.__class__.__name__,
+                f"({self.task_name})",
+            )
         self.populate_requirements_for_subroutines()
         for attr in dir(self):
             child = getattr(self, attr)
             if isinstance(child, SubroutineModel):
-                child.run_profile()
+                child.run_profile(verbose=verbose)
+                if verbose:
+                    # If verbose, indicate that branch of tree has ended.
+                    print("Branch ended")
 
     def print_profile(self, level=0):
         # Format the requirements string to be more readable
@@ -74,6 +92,17 @@ class SubroutineModel:
                             else 1
                         )
         return counts
+
+    def print_qubit_usage(self, level=0):
+        # Print the number of qubits for the current subroutine
+        qubits = self.count_qubits()
+        print(f"{'  ' * level}Subroutine: {self.task_name} - Qubits: {qubits}")
+
+        # Recursively call this method for all child subroutines
+        for attr in dir(self):
+            child = getattr(self, attr)
+            if isinstance(child, SubroutineModel):
+                child.print_qubit_usage(level + 1)
 
     def display_hierarchy(self, graph=None, parent_name=None):
         if graph is None:
