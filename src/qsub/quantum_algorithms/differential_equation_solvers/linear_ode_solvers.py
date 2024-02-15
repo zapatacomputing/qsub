@@ -1,4 +1,5 @@
 from qsub.subroutine_model import SubroutineModel
+from qsub.generic_block_encoding import GenericBlockEncoding
 from qsub.utils import consume_fraction_of_error_budget
 
 from typing import Optional
@@ -39,7 +40,7 @@ class TaylorQuantumODESolver(SubroutineModel):
         self.requirements["solve_linear_system"] = SubroutineModel(
             "solve_linear_system"
         )
-        self.requirements["ode_matrix_block_encoding"] = SubroutineModel(
+        self.requirements["ode_matrix_block_encoding"] = GenericBlockEncoding(
             "ode_matrix_block_encoding"
         )
         self.requirements["prepare_inhomogeneous_term_vector"] = SubroutineModel(
@@ -130,7 +131,6 @@ class TaylorQuantumODESolver(SubroutineModel):
             ],
             prepare_initial_vector=self.requirements["prepare_initial_vector"],
         )
-
         # Set qlsa block encoding subroutine as ODEHistoryBlockEncoding
         self.amplify_amplitude.state_preparation_oracle.prepare_ode_history_state.linear_system_block_encoding = ODEHistoryBlockEncoding(
             block_encode_ode_matrix=self.requirements["ode_matrix_block_encoding"]
@@ -345,14 +345,16 @@ class ODEHistoryBlockEncoding(SubroutineModel):
         self,
         task_name="block_encode_ode_history_system",
         requirements=None,
-        block_encode_ode_matrix: Optional[SubroutineModel] = None,
+        block_encode_ode_matrix: Optional[GenericBlockEncoding] = None,
     ):
         super().__init__(task_name, requirements)
 
         if block_encode_ode_matrix is not None:
             self.block_encode_ode_matrix = block_encode_ode_matrix
         else:
-            self.block_encode_ode_matrix = SubroutineModel("block_encode_ode_matrix")
+            self.block_encode_ode_matrix = GenericBlockEncoding(
+                "block_encode_ode_matrix"
+            )
 
     def set_requirements(
         self,
