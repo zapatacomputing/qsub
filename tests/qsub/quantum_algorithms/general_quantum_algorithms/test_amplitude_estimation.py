@@ -1,13 +1,13 @@
-import pytest
 import numpy as np
 from src.qsub.quantum_algorithms.general_quantum_algorithms.amplitude_estimation import (
     QuantumAmplitudeEstimation,
-    compute_number_of_grover_iterates_for_amp_est,
     SubroutineModel,
 )
 
 
 # Test the function for computing the number of Grover iterates
+# TODO: This test uses a function compute_number_of_grover_iterates_for_amp_est which
+# is not defined anywhere in the codebase. Maybe it was removed or renamed?
 def test_compute_number_of_grover_iterates_for_amp_est():
     failure_tolerance = 0.1
     estimation_error = 0.01
