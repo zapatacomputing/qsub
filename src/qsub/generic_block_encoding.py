@@ -40,10 +40,10 @@ class GenericLinearSystemBlockEncoding(SubroutineModel):
 
     def set_requirements(
         self,
-        failure_tolerance: float = None,
-        kappa_P: float = None,
-        mu_P_A: float = None,
-        A_stable: float = None,
+        failure_tolerance: Optional[float] = None,
+        kappa_P: Optional[float] = None,
+        mu_P_A: Optional[float] = None,
+        A_stable: Optional[float] = None,
     ):
         args = locals()
         # Clean up the args dictionary before setting requirements
