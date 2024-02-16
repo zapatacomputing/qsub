@@ -60,6 +60,13 @@ class CoherentQuantumAmplitudeEstimation(SubroutineModel):
         subroutine_error_budget_allocation = [0.5, 0.5]
 
         # Compute number of Grover iterates needed
+        # If amplitude note provided, use worst-case value of 0.5
+        if "amplitude" not in self.requirements:
+            warnings.warn(
+                "No amplitude provided. Using worst-case value of 0.5 for amplitude."
+            )
+            self.set_requirements(amplitude=0.5)
+
         number_of_grover_iterates = (
             compute_number_of_grover_iterates_for_coherent_quantum_amp_est(
                 consumed_failure_tolerance,
