@@ -26,6 +26,7 @@ setup(
         "six==1.16.0",
         "tenacity==8.2.3",
         "tomli==2.0.1",
+        "sympy==1.12",
     ],
     extras_require={
         "dev": [
