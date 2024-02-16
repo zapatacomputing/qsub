@@ -81,9 +81,7 @@ For more complex scenarios, refer to the documentation on linking subroutines an
 We welcome contributions! If you're interested in adding more subroutines or enhancing the framework, please follow these steps:
 1. Fork the repository.
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your changes (`git commit -am 'Add some AmazingFeature'`).
-4. Push to the branch (`git push origin feature/AmazingFeature`).
-5. Open a Pull Request.
-
-```
-```
+3. Add file(s) with your chages (`git add path/to/file_1 path/to/file_2`).
+4. Commit your changes (`git commit -m 'commit message'`).
+5. Push to the branch (`git push origin feature/AmazingFeature`).
+6. Open a Pull Request.
