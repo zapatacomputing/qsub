@@ -81,3 +81,13 @@ We welcome contributions! If you're interested in adding more subroutines or enh
 4. Commit your changes (`git commit -m 'commit message'`).
 5. Push to the branch (`git push origin feature/AmazingFeature`).
 6. Open a Pull Request.
+
+### Running tests
+First, install development dependencies with
+```
+pip install -e '.[dev]'
+```
+Then, to run tests, execute the commmand:
+```
+pytest tests
+```
