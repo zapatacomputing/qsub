@@ -1,10 +1,10 @@
 ################################################################################
 # © Copyright 2023 Zapata Computing Inc.
 ################################################################################
-import numpy as np
-from ...subroutine_model import SubroutineModel
-from typing import Optional
 import math
+from typing import Optional
+import numpy as np
+from qsub.subroutine_model import SubroutineModel
 from qsub.utils import consume_fraction_of_error_budget
 
 

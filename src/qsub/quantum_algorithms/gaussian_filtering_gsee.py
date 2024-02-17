@@ -4,10 +4,9 @@
 """Tools for the Fourier-Filtered Low-Depth Ground State Energy Estimation (FF-LD-GSEE)
 algorithm (arXiv:2209.06811v2)."""
 
-import numpy as np
-from ..subroutine_model import SubroutineModel
 from typing import Optional
-
+import numpy as np
+from qsub.subroutine_model import SubroutineModel
 
 from typing import Optional
 
