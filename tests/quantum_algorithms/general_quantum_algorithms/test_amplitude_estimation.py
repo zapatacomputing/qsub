@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from src.qsub.quantum_algorithms.general_quantum_algorithms.amplitude_estimation import (
-    QuantumAmplitudeEstimation,
+    CoherentQuantumAmplitudeEstimation,
     compute_number_of_grover_iterates_for_amp_est,
     SubroutineModel,
 )
@@ -18,17 +18,17 @@ def test_compute_number_of_grover_iterates_for_amp_est():
     assert actual_iterates == expected_iterates
 
 
-# Test the initialization of QuantumAmplitudeEstimation
+# Test the initialization of CoherentQuantumAmplitudeEstimation
 def test_quantum_amplitude_estimation_initialization():
-    qae = QuantumAmplitudeEstimation()
+    qae = CoherentQuantumAmplitudeEstimation()
     assert qae.task_name == "estimate_amplitude"
     assert isinstance(qae.state_preparation_oracle, SubroutineModel)
     assert isinstance(qae.mark_subspace, SubroutineModel)
 
 
-# Test setting requirements in QuantumAmplitudeEstimation
+# Test setting requirements in CoherentQuantumAmplitudeEstimation
 def test_quantum_amplitude_estimation_set_requirements():
-    qae = QuantumAmplitudeEstimation()
+    qae = CoherentQuantumAmplitudeEstimation()
     estimation_error = 0.01
     failure_tolerance = 0.1
     qae.set_requirements(
@@ -38,9 +38,9 @@ def test_quantum_amplitude_estimation_set_requirements():
     assert qae.requirements["failure_tolerance"] == failure_tolerance
 
 
-# Test populating requirements for subroutines in QuantumAmplitudeEstimation
+# Test populating requirements for subroutines in CoherentQuantumAmplitudeEstimation
 def test_quantum_amplitude_estimation_populate_requirements_for_subroutines():
-    qae = QuantumAmplitudeEstimation()
+    qae = CoherentQuantumAmplitudeEstimation()
     estimation_error = 0.01
     failure_tolerance = 0.1
     qae.set_requirements(
