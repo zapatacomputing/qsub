@@ -5,9 +5,11 @@ from anytree import Node, RenderTree
 from anytree.exporter import DotExporter
 import plotly.graph_objects as go
 from sympy import symbols
+from abc import ABC, abstractmethod
+from inspect import signature
 
 
-class SubroutineModel:
+class SubroutineModel(ABC):
     def __init__(self, task_name: str, requirements: Optional[dict] = None, **kwargs):
         self.task_name = task_name
         self.requirements = requirements or {}
@@ -15,14 +17,40 @@ class SubroutineModel:
         for attr, value in kwargs.items():
             if isinstance(value, SubroutineModel):
                 setattr(self, attr, value)
-
+        sig = signature(self.set_requirements)
+        parameters = sig.parameters
+        if 'failure_tolerance' not in parameters or parameters['failure_tolerance'].default is not parameters['failure_tolerance'].empty:
+            raise TypeError("The set_requirements method must have 'failure_tolerance' as a required argument.")
+    
+    
+    # This is just cleaning requirements dictionary. But why can't I deal with this dictionary straight away
+    # It seems like you are setting the keys and values to a dictionary in a round about fashion.
     def set_requirements(self, *args, **kwargs):
         if args:
             raise TypeError(
                 "The set_requirements method expects keyword arguments of the form argument=value."
             )
-        self.requirements = kwargs
+        if not hasattr(self, "requirements"):
+            self.requirements = {}
 
+        args = locals()
+        # Clean up the args dictionary before setting requirements
+        args.pop("self")
+        # Clean up the kwargs dictionary before setting requirements
+        clean_kwargs = {k: v for k, v in kwargs.items() if v is not None and not k.startswith("__")}
+
+        # Update the requirements with new values, ensuring they are instances of SubroutineModel
+        for k, v in clean_kwargs.items():
+            if k in self.requirements and not isinstance(self.requirements[k], SubroutineModel):
+                self.requirements[k] = v
+            else:
+                self.requirements[k] = v if v is not None else SubroutineModel(k)
+
+        # Optionally, update the requirements dictionary directly (if previous logic is not needed)
+        self.requirements.update(clean_kwargs)
+
+    
+    @abstractmethod
     def populate_requirements_for_subroutines(self):
         pass
 
