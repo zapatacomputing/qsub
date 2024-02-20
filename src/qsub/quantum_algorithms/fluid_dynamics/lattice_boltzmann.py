@@ -20,7 +20,7 @@ class LBMDragEstimationData:
     mark_drag_vector: SubroutineModel = SubroutineModel("mark_drag_vector")
 
 @dataclass
-class LBMDragReflectionData
+class LBMDragReflectionData:
     failure_tolerance: float = 0
 
 @dataclass
