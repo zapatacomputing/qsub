@@ -153,28 +153,6 @@ class SphereBoundaryOracle(SubroutineModel):
         else:
             self.quantum_square = SubroutineModel("quantum_square")
 
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-        radius: float = None,
-        grid_spacing: float = None,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        # Initialize the requirements attribute if it doesn't exist
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-
-        # Update the requirements with new values
-        self.requirements.update(args)
-
-        # Call the parent class's set_requirements method with the updated requirements
-        super().set_requirements(**self.requirements)
-
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
 
