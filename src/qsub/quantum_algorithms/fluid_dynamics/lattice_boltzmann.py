@@ -43,7 +43,6 @@ class LBMDragEstimation(SubroutineModel):
         else:
             self.estimate_amplitude = SubroutineModel("estimate_amplitude")
 
-        self.set_requirements(LBMDragEstimationData)
 
     def populate_requirements_for_subroutines(self):
         # Note: This subroutine consumes no failure probability.
@@ -112,7 +111,7 @@ class LBMDragReflection(SubroutineModel):
             self.compute_boundary = compute_boundary
         else:
             self.compute_boundary = SubroutineModel("compute_boundary")
-        self.set_requirements(LBMDragReflectionData)
+
 
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the quadratic term block encoding
@@ -153,7 +152,6 @@ class SphereBoundaryOracle(SubroutineModel):
             self.quantum_square = quantum_square
         else:
             self.quantum_square = SubroutineModel("quantum_square")
-        self.set_requirements(SphereBoundaryOracleData)
 
     def set_requirements(
         self,
