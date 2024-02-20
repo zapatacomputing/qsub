@@ -20,12 +20,8 @@ class SubroutineModel(ABC):
     def set_requirements(self,requirements:dataclass):
         if is_dataclass(requirements):
             self.requirements = asdict(requirements)
-            if "failure_tolerance"  not in self.requirements:
-                RuntimeError("Failure Tolerance is a necessary requirement for resource estimation")
-            for key, value in self.requirements.items():
-                if isinstance(value, SubroutineModel):
-                    setattr(self, key, value)
-    
+            assert "failure_tolerance"  in self.requirements
+
     @abstractmethod
     def populate_requirements_for_subroutines(self):
         pass
