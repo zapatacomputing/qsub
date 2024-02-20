@@ -5,8 +5,7 @@ from anytree import Node, RenderTree
 import plotly.graph_objects as go
 from sympy import symbols
 from abc import ABC, abstractmethod
-from inspect import signature
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, is_dataclass
 
 
 class SubroutineModel(ABC):
@@ -19,10 +18,13 @@ class SubroutineModel(ABC):
                 setattr(self, attr, value)
        
     def set_requirements(self,requirements:dataclass):
-        if isinstance(requirements, dataclass):
+        if is_dataclass(requirements):
             self.requirements = asdict(requirements)
             if "failure_tolerance"  not in self.requirements:
                 RuntimeError("Failure Tolerance is a necessary requirement for resource estimation")
+            for key, value in self.requirements.items():
+                if isinstance(value, SubroutineModel):
+                    setattr(self, key, value)
     
     @abstractmethod
     def populate_requirements_for_subroutines(self):
