@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from graphviz import Digraph
 
 from anytree import Node, RenderTree
@@ -13,7 +13,7 @@ class SubroutineModel(ABC):
     def __init__(self, task_name: str, requirements: Optional[dict] = None, **kwargs):
         self.task_name = task_name
         self.requirements = requirements or {}
-        self.number_of_times_called = None
+        self.number_of_times_called: Optional[Union[float, int]] = None
         for attr, value in kwargs.items():
             if isinstance(value, SubroutineModel):
                 setattr(self, attr, value)

@@ -1,11 +1,6 @@
 import pytest
 
-from src.qsub.subroutine_model import SubroutineModel
-
-# Why does the following not work?
-# from qsub.subroutine_model import (
-#     SubroutineModel,
-# )  # Adjust the import to where your class is located
+from qsub.subroutine_model import SubroutineModel
 
 
 def test_init():
