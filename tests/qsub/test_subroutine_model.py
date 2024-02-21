@@ -7,8 +7,8 @@ from typing import Optional
 @pytest.fixture()
 def subroutinemodel():
     class MockSubroutineModel(SubroutineModel):
-        def __init__(self, task_name: str, requirements: Optional[dict] = None, **kwargs):
-            super().__init__(task_name, requirements, **kwargs)
+        def __init__(self, task_name: str, **kwargs):
+            super().__init__(task_name, **kwargs)
         def populate_requirements_for_subroutines(self):
             return super().populate_requirements_for_subroutines()
 
@@ -33,7 +33,7 @@ def child_subroutine_2():
     return MockSubroutineModel(task_name="Task2")
 
 @pytest.fixture()
-def mock_data_class(child_subroutine_1, child_subroutine_2):
+def mock_data_class():
     @dataclass
     class SubroutineModelData:
         field_1: float = 0
@@ -61,7 +61,6 @@ def test_count_subroutines(subroutinemodel, child_subroutine_1 , child_subroutin
 
 
 def test_print_profile(capsys,subroutinemodel, mock_data_class):
-    # sub = SubroutineModel(task_name="Main", requirements={"req1": "val1"})
     sub = subroutinemodel
     sub.set_requirements(mock_data_class)
     sub.print_profile()

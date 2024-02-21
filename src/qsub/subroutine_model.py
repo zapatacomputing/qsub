@@ -9,9 +9,9 @@ from dataclasses import dataclass, asdict, is_dataclass
 
 
 class SubroutineModel(ABC):
-    def __init__(self, task_name: str, requirements: Optional[dict] = None, **kwargs):
+    def __init__(self, task_name: str, **kwargs):
         self.task_name = task_name
-        self.requirements = requirements or {}
+        self.requirements = {}
         self.number_of_times_called: Optional[Union[float, int]] = None
         for attr, value in kwargs.items():
             if isinstance(value, SubroutineModel):

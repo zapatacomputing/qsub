@@ -6,50 +6,19 @@ from ...subroutine_model import SubroutineModel
 from typing import Optional
 import math
 from qsub.utils import consume_fraction_of_error_budget
+from qsub.utils import create_data_class_from_dict
 
 
 class TaylorQLSA(SubroutineModel):
     def __init__(
         self,
+        linear_system_block_encoding: SubroutineModel,
+        prepare_b_vector: SubroutineModel,
         task_name="solve_quantum_linear_system",
-        requirements=None,
-        linear_system_block_encoding: Optional[SubroutineModel] = None,
-        prepare_b_vector: Optional[SubroutineModel] = None,
     ):
-        super().__init__(task_name, requirements)
-
-        if linear_system_block_encoding is not None:
-            self.linear_system_block_encoding = linear_system_block_encoding
-        else:
-            self.linear_system_block_encoding = SubroutineModel(
-                "linear_system_block_encoding"
-            )
-
-        if prepare_b_vector is not None:
-            self.prepare_b_vector = prepare_b_vector
-        else:
-            self.prepare_b_vector = SubroutineModel("prepare_b_vector")
-
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-        # condition_number: float = None,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        # Initialize the requirements attribute if it doesn't exist
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-
-        # Update the requirements with new values
-        self.requirements.update(args)
-
-        # Call the parent class's set_requirements method with the updated requirements
-        super().set_requirements(**self.requirements)
+        super().__init__(task_name)
+        self.linear_system_block_encoding = linear_system_block_encoding
+        self.prepare_b_vector = prepare_b_vector
 
     def populate_requirements_for_subroutines(self):
         # Allocate failure tolerance
@@ -80,14 +49,11 @@ class TaylorQLSA(SubroutineModel):
         self.prepare_b_vector.number_of_times_called = n_calls_to_b
 
         # Set block encoding requirements
-        self.linear_system_block_encoding.set_requirements(
-            failure_tolerance=linear_system_block_encoding_failure_tolerance,
-        )
+        linear_system_block_encoding_dict = {"failure_tolerance": linear_system_block_encoding_failure_tolerance }
+        prepare_b_vector_dict = {"failure_tolerance": prepare_b_vector_failure_tolerance}
 
-        # Set block encoding requirements
-        self.prepare_b_vector.set_requirements(
-            failure_tolerance=prepare_b_vector_failure_tolerance,
-        )
+        self.linear_system_block_encoding.set_requirements(create_data_class_from_dict(linear_system_block_encoding_dict))
+        self.prepare_b_vector.set_requirements(create_data_class_from_dict(prepare_b_vector_dict))
 
     def count_qubits(self):
         # From Theorem 1 in https://arxiv.org/abs/2305.11352
