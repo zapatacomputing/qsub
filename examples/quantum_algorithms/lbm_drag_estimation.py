@@ -9,7 +9,7 @@ from qsub.quantum_algorithms.general_quantum_algorithms.amplitude_amplification 
     ObliviousAmplitudeAmplification,
 )
 from qsub.quantum_algorithms.general_quantum_algorithms.amplitude_estimation import (
-    CoherentQuantumAmplitudeEstimation,
+    IterativeQuantumAmplitudeEstimationCircuit,
 )
 from qsub.quantum_algorithms.differential_equation_solvers.linear_ode_solvers import (
     TaylorQuantumODESolver,
@@ -28,7 +28,7 @@ from qsub.quantum_algorithms.differential_equation_solvers.linearization_methods
 
 def generate_graphs():
     evolution_time = 10000  # Example value
-    drag_force = 0.0001  # Example value
+    drag_force = 1  # Example value
     failure_tolerance = 1e-10  # Example value
     mu_P_A = -0.001
     norm_inhomogeneous_term_vector = 0.0  # Example value
@@ -37,7 +37,7 @@ def generate_graphs():
     kappa_P = 1
     radius = 35
     grid_spacing = 10000
-    estimation_error = 0.0001
+    estimation_error = 0.01
 
     carleman_block_encoding = CarlemanBlockEncoding()
     carleman_block_encoding.set_requirements(
@@ -63,7 +63,7 @@ def generate_graphs():
     mark_drag_vector = LBMDragReflection(compute_boundary=sphere_oracle)
 
     drag_est = LBMDragEstimation(
-        estimate_amplitude=CoherentQuantumAmplitudeEstimation()
+        estimate_amplitude=IterativeQuantumAmplitudeEstimationCircuit()
     )
     drag_est.set_requirements(
         evolution_time=evolution_time,
