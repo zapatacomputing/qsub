@@ -74,7 +74,6 @@ class CoherentQuantumAmplitudeEstimation(SubroutineModel):
                 amplitude=self.requirements["amplitude"],
             )
         )
-        breakpoint()
 
         # Set number of times called to number of Grover iterates
         self.state_preparation_oracle.number_of_times_called = (
@@ -189,7 +188,7 @@ class IterativeQuantumAmplitudeEstimationCircuit(SubroutineModel):
 
     def __init__(
         self,
-        task_name="estimate_amplitude",
+        task_name="run_iterative_qae_circuit",
         requirements=None,
         state_preparation_oracle: Optional[SubroutineModel] = None,
         mark_subspace: Optional[SubroutineModel] = None,
@@ -248,7 +247,9 @@ class IterativeQuantumAmplitudeEstimationCircuit(SubroutineModel):
         )
 
         # Set number of times called to number of Grover iterates
-        self.state_preparation_oracle.number_of_times_called = number_of_grover_iterates
+        self.state_preparation_oracle.number_of_times_called = (
+            2 * number_of_grover_iterates
+        )
         self.mark_subspace.number_of_times_called = number_of_grover_iterates
 
         self.state_preparation_oracle.set_requirements(
@@ -270,11 +271,7 @@ def compute_number_of_grover_iterates_per_circuit_for_iterative_amp_est(
 ):
     # Compute number of Grover iterates needed for iterative amplitude estimation
     # From https://arxiv.org/abs/quant-ph/0005055
-    number_of_grover_iterates = (
-        50
-        / estimation_error
-        * np.log((2 / np.log2((np.pi / (4 * estimation_error)))) / failure_tolerance)
-    )
+    number_of_grover_iterates = np.pi / (8 * estimation_error)
 
     return number_of_grover_iterates
 
