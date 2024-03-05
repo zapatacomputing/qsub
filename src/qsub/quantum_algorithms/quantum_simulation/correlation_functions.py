@@ -195,5 +195,5 @@ class DynamicCorrelationFunctionEstimation(SubroutineModel):
     def count_qubits(self):
         return Max(
             self.estimate_real_part_of_correlation_function.count_qubits(),
-            self.estimate_real_part_of_correlation_function.count_qubits(),
+            self.estimate_imaginary_part_of_correlation_function.count_qubits(),
         )
