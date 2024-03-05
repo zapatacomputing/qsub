@@ -2,6 +2,7 @@ import numpy as np
 from typing import Optional
 from ...subroutine_model import SubroutineModel
 import warnings
+from qsub.utils import consume_fraction_of_error_budget
 
 
 class CoherentQuantumAmplitudeEstimation(SubroutineModel):
@@ -50,10 +51,14 @@ class CoherentQuantumAmplitudeEstimation(SubroutineModel):
         # Populate requirements for state_preparation_oracle and mark_subspace
 
         # Allocate failure tolerance
-        allocation = 0.5
-        consumed_failure_tolerance = allocation * self.requirements["failure_tolerance"]
-        remaining_failure_tolerance = (
-            self.requirements["failure_tolerance"] - consumed_failure_tolerance
+        # consumed_failure_tolerance = allocation * self.requirements["failure_tolerance"]
+        # remaining_failure_tolerance = (
+        #     self.requirements["failure_tolerance"] - consumed_failure_tolerance
+        # )
+        remaining_failure_tolerance = self.requirements["failure_tolerance"]
+
+        (consumed_failure_tolerance, remaining_failure_tolerance) = (
+            consume_fraction_of_error_budget(0.5, remaining_failure_tolerance)
         )
 
         # Set subroutine error budget allocation
