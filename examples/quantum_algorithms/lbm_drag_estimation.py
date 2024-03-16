@@ -10,6 +10,7 @@ from qsub.quantum_algorithms.general_quantum_algorithms.amplitude_amplification 
 )
 from qsub.quantum_algorithms.general_quantum_algorithms.amplitude_estimation import (
     IterativeQuantumAmplitudeEstimationCircuit,
+    IterativeQuantumAmplitudeEstimationAlgorithm,
 )
 from qsub.quantum_algorithms.differential_equation_solvers.linear_ode_solvers import (
     TaylorQuantumODESolver,
@@ -17,29 +18,71 @@ from qsub.quantum_algorithms.differential_equation_solvers.linear_ode_solvers im
 
 from qsub.quantum_algorithms.fluid_dynamics.lattice_boltzmann import (
     LBMDragEstimation,
-    LBMDragReflection,
-    SphereBoundaryOracle,
+    LBMDragCoefficientsReflection,
+    LBMLinearTermBlockEncoding,
+    LBMQuadraticTermBlockEncoding,
+    LBMCubicTermBlockEncoding,
 )
 
 from qsub.quantum_algorithms.differential_equation_solvers.linearization_methods import (
     CarlemanBlockEncoding,
 )
 
+from qsub.quantum_arithmetic_operations.quantum_comparators import GidneyComparator
+from qsub.quantum_arithmetic_operations.quantum_adders import GidneyAdder
+from qsub.quantum_arithmetic_operations.quantum_square_roots import GidneySquareRoot
+from qsub.quantum_arithmetic_operations.quantum_multipliers import GidneyMultiplier
+
 
 def generate_graphs():
-    evolution_time = 10000  # Example value
-    drag_force = 1  # Example value
-    failure_tolerance = 1e-10  # Example value
+    # TODO: determine range of evolution_time
+    evolution_time = 1  # Example value
+    failure_tolerance = 1e-4  # Example value
+    # TODO: determine range of mu_P_A
     mu_P_A = -0.001
-    norm_inhomogeneous_term_vector = 0.0  # Example value
+    norm_inhomogeneous_term_vector = 0.0  # ODE is homogeneous
+    # TODO: determine range of norm_x_t
     norm_x_t = 1.0  # Example value
     A_stable = False
+    # TODO: determine range of kappa_P
     kappa_P = 1
-    radius = 35
-    grid_spacing = 10000
-    estimation_error = 0.01
+    number_of_spatial_grid_points = 4.096e10
+    number_of_velocity_grid_points = 27
+    x_length_in_meters = 0.1
+    y_length_in_meters = 0.08
+    z_length_in_meters = 0.08
+    sphere_radius_in_meters = 0.005
+    time_discretization_in_seconds = 5.1928e-5
+    relative_estimation_error = 0.01
 
-    carleman_block_encoding = CarlemanBlockEncoding()
+    cell_volume = (
+        x_length_in_meters
+        * y_length_in_meters
+        * z_length_in_meters
+        / number_of_spatial_grid_points
+    )
+    cell_face_area = cell_volume ** (2 / 3)
+
+    number_of_cells_incident_on_face = (
+        2 * np.pi * sphere_radius_in_meters**2 / cell_face_area
+    )
+    rough_estimate_of_drag_force = (
+        cell_volume / time_discretization_in_seconds
+    ) * number_of_cells_incident_on_face
+
+    linear_term_block_encoding = LBMLinearTermBlockEncoding()
+    linear_term_block_encoding.set_requirements(
+        number_of_spatial_grid_points=number_of_spatial_grid_points,
+        number_of_velocity_grid_points=number_of_velocity_grid_points,
+    )
+    quadratic_term_block_encoding = LBMQuadraticTermBlockEncoding()
+    cubic_term_block_encoding = LBMCubicTermBlockEncoding()
+
+    carleman_block_encoding = CarlemanBlockEncoding(
+        block_encode_linear_term=linear_term_block_encoding,
+        block_encode_quadratic_term=quadratic_term_block_encoding,
+        block_encode_cubic_term=cubic_term_block_encoding,
+    )
     carleman_block_encoding.set_requirements(
         kappa_P=kappa_P,
         mu_P_A=mu_P_A,
@@ -58,17 +101,30 @@ def generate_graphs():
         ode_matrix_block_encoding=carleman_block_encoding,
     )
 
-    sphere_oracle = SphereBoundaryOracle()
-    sphere_oracle.set_requirements(radius=radius, grid_spacing=grid_spacing)
-    mark_drag_vector = LBMDragReflection(compute_boundary=sphere_oracle)
+    quantum_comparator = GidneyComparator()
+    quantum_adder = GidneyAdder()
+    quantum_sqrt = GidneySquareRoot()
+    quantum_square = GidneyMultiplier()
 
-    drag_est = LBMDragEstimation(
-        estimate_amplitude=IterativeQuantumAmplitudeEstimationCircuit()
+    # Initialize LBM drag estimation
+    mark_drag_vector = LBMDragCoefficientsReflection(
+        quantum_comparator=quantum_comparator,
+        quantum_adder=quantum_adder,
+        quantum_sqrt=quantum_sqrt,
+        quantum_square=quantum_square,
     )
+
+    amp_est_circuit = IterativeQuantumAmplitudeEstimationCircuit()
+
+    amplitude_estimation_alg = IterativeQuantumAmplitudeEstimationAlgorithm(
+        run_iterative_qae_circuit=amp_est_circuit
+    )
+
+    drag_est = LBMDragEstimation(estimate_amplitude=amplitude_estimation_alg)
     drag_est.set_requirements(
         evolution_time=evolution_time,
-        estimation_error=estimation_error,
-        estimated_drag_force=drag_force,
+        relative_estimation_error=relative_estimation_error,
+        estimated_drag_force=rough_estimate_of_drag_force,
         mu_P_A=mu_P_A,
         kappa_P=kappa_P,
         failure_tolerance=failure_tolerance,
@@ -76,6 +132,13 @@ def generate_graphs():
         norm_x_t=norm_x_t,
         A_stable=A_stable,
         solve_quantum_ode=taylor_ode,
+        number_of_spatial_grid_points=number_of_spatial_grid_points,
+        number_of_velocity_grid_points=number_of_velocity_grid_points,
+        x_length_in_meters=x_length_in_meters,
+        y_length_in_meters=y_length_in_meters,
+        z_length_in_meters=z_length_in_meters,
+        sphere_radius_in_meters=sphere_radius_in_meters,
+        time_discretization_in_seconds=time_discretization_in_seconds,
         mark_drag_vector=mark_drag_vector,
     )
     # print(
