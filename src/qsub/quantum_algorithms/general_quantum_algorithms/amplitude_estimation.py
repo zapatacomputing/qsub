@@ -128,14 +128,16 @@ class IterativeQuantumAmplitudeEstimationAlgorithm(SubroutineModel):
         self,
         task_name="estimate_amplitude",
         requirements=None,
-        qae_circuit: Optional[SubroutineModel] = None,
+        run_iterative_qae_circuit: Optional[SubroutineModel] = None,
     ):
         super().__init__(task_name, requirements)
 
-        if qae_circuit is not None:
-            self.qae_circuit = qae_circuit
+        if run_iterative_qae_circuit is not None:
+            self.run_iterative_qae_circuit = run_iterative_qae_circuit
         else:
-            self.qae_circuit = SubroutineModel("qae_circuit")
+            self.run_iterative_qae_circuit = SubroutineModel(
+                "run_iterative_qae_circuit"
+            )
 
     def set_requirements(
         self,
@@ -162,7 +164,6 @@ class IterativeQuantumAmplitudeEstimationAlgorithm(SubroutineModel):
         # Populate requirements for state_preparation_oracle and mark_subspace
 
         # This subroutine consumes no failure tolerance
-
         # Compute number of Grover iterates needed
         number_of_samples = compute_number_of_samples_for_iterative_amp_est(
             self.requirements["failure_tolerance"],
@@ -170,15 +171,15 @@ class IterativeQuantumAmplitudeEstimationAlgorithm(SubroutineModel):
         )
 
         # Set number of times called to number of Grover iterates
-        self.qae_circuit.number_of_times_called = number_of_samples
+        self.run_iterative_qae_circuit.number_of_times_called = number_of_samples
 
-        self.qae_circuit.set_requirements(
+        self.run_iterative_qae_circuit.set_requirements(
             failure_tolerance=self.requirements["failure_tolerance"],
             estimation_error=self.requirements["estimation_error"],
         )
 
     def count_qubits(self):
-        return self.qae_circuit.count_qubits()
+        return self.run_iterative_qae_circuit.count_qubits()
 
 
 class IterativeQuantumAmplitudeEstimationCircuit(SubroutineModel):
@@ -275,7 +276,7 @@ def compute_number_of_grover_iterates_per_circuit_for_iterative_amp_est(
     failure_tolerance, estimation_error
 ):
     # Compute number of Grover iterates needed for iterative amplitude estimation
-    # From https://arxiv.org/abs/quant-ph/0005055
+    # From https://arxiv.org/abs/1912.05559
     number_of_grover_iterates = np.pi / (8 * estimation_error)
 
     return number_of_grover_iterates
@@ -285,9 +286,9 @@ def compute_number_of_samples_for_iterative_amp_est(
     failure_tolerance, estimation_error
 ):
     # Compute number of qae circuit samples needed for iterative amplitude estimation
-    # From https://arxiv.org/abs/quant-ph/0005055
+    # From https://arxiv.org/abs/1912.05559
     number_of_samples = (32 / (1 - 2 * np.sin(np.pi / 14)) ** 2) * np.log(
-        (2 / np.log2((np.pi / (4 * estimation_error)))) / failure_tolerance
+        (2 * np.log2((np.pi / (4 * estimation_error)))) / failure_tolerance
     )
 
     return number_of_samples
