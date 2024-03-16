@@ -155,7 +155,7 @@ class TaylorQuantumODESolver(SubroutineModel):
     def count_qubits(self):
         return self.amplify_amplitude.count_qubits()
 
-    def get_normalization_factor(self):
+    def get_subnormalization(self):
         # Returns the normalization factor for the vector encoding the marked state
         warnings.warn("This function is not fully implemented.", UserWarning)
         return 42
