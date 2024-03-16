@@ -6,6 +6,7 @@ from ...subroutine_model import SubroutineModel
 from typing import Optional
 import math
 from qsub.utils import consume_fraction_of_error_budget
+from qsub.generic_block_encoding import GenericLinearSystemBlockEncoding
 
 
 class TaylorQLSA(SubroutineModel):
@@ -13,7 +14,7 @@ class TaylorQLSA(SubroutineModel):
         self,
         task_name="solve_quantum_linear_system",
         requirements=None,
-        linear_system_block_encoding: Optional[SubroutineModel] = None,
+        linear_system_block_encoding: Optional[GenericLinearSystemBlockEncoding] = None,
         prepare_b_vector: Optional[SubroutineModel] = None,
     ):
         super().__init__(task_name, requirements)
@@ -21,7 +22,7 @@ class TaylorQLSA(SubroutineModel):
         if linear_system_block_encoding is not None:
             self.linear_system_block_encoding = linear_system_block_encoding
         else:
-            self.linear_system_block_encoding = SubroutineModel(
+            self.linear_system_block_encoding = GenericLinearSystemBlockEncoding(
                 "linear_system_block_encoding"
             )
 
@@ -33,7 +34,6 @@ class TaylorQLSA(SubroutineModel):
     def set_requirements(
         self,
         failure_tolerance: float = None,
-        # condition_number: float = None,
     ):
         args = locals()
         # Clean up the args dictionary before setting requirements
