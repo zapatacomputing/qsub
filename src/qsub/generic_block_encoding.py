@@ -25,11 +25,11 @@ class GenericBlockEncoding(SubroutineModel):
 
     def get_subnormalization(self):
         # For a generic block encoding object, a symbol with the task name is returned
-        # for the number of qubits
-        return symbols(f"{self.task_name}_subnorm")
+        # for the subnormalization
+        return symbols(f"{self.task_name}_subnormalization")
 
 
-class GenericLinearSystemBlockEncoding(SubroutineModel):
+class GenericLinearSystemBlockEncoding(GenericBlockEncoding):
     def __init__(self, task_name: str, requirements: Optional[dict] = None, **kwargs):
         self.task_name = task_name
         self.requirements = requirements or {}
@@ -64,7 +64,7 @@ class GenericLinearSystemBlockEncoding(SubroutineModel):
     def populate_requirements_for_subroutines(self):
         pass
 
-    def get_subnormalization(self):
-        # For a generic block encoding object, a symbol with the task name is returned
-        # for the number of qubits
+    def get_condition_number(self):
+        # For a generic linear system block encoding object, a symbol with the task name is returned
+        # for the condition number
         return symbols(f"{self.task_name}_condition_number")
