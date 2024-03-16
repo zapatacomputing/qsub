@@ -7,7 +7,7 @@ import warnings
 from sympy import symbols, Max, ceiling, log
 
 
-class CarlemanBlockEncoding(SubroutineModel):
+class CarlemanBlockEncoding(GenericBlockEncoding):
     def __init__(
         self,
         task_name="block_encode_carleman_linearization",
@@ -71,10 +71,8 @@ class CarlemanBlockEncoding(SubroutineModel):
             remaining_failure_tolerance,
         ) = consume_fraction_of_error_budget(0.5, remaining_failure_tolerance)
 
-        be_costs = get_block_encoding_costs_from_carleman_requirements(truncation_error)
-
         # Set number of calls to the linear term block encoding
-        self.block_encode_linear_term.number_of_times_called = be_costs
+        self.block_encode_linear_term.number_of_times_called = 1
 
         # Set linear term block encoding requirements
         self.block_encode_linear_term.set_requirements(
@@ -82,7 +80,7 @@ class CarlemanBlockEncoding(SubroutineModel):
         )
 
         # Set number of calls to the quadratic term block encoding
-        self.block_encode_quadratic_term.number_of_times_called = be_costs
+        self.block_encode_quadratic_term.number_of_times_called = 1
 
         # Set quadratic term block encoding requirements
         self.block_encode_quadratic_term.set_requirements(
@@ -90,7 +88,7 @@ class CarlemanBlockEncoding(SubroutineModel):
         )
 
         # Set number of calls to the cubic term block encoding
-        self.block_encode_cubic_term.number_of_times_called = be_costs
+        self.block_encode_cubic_term.number_of_times_called = 1
 
         # Set cubic term block encoding requirements
         self.block_encode_cubic_term.set_requirements(
@@ -107,27 +105,33 @@ class CarlemanBlockEncoding(SubroutineModel):
             self.block_encode_cubic_term.get_subnormalization(),
         )
 
-        return (
+        # Upper bound on subnormalization from paper (TODO: add reference)
+        subnormalization = (
             ode_degree
             * carleman_truncation_level
             * (carleman_truncation_level + 1)
             * max_block_encoding_subnormalization
-        ) / 2
+            / 2
+        )
+
+        return subnormalization
 
     def count_qubits(self):
+        # TODO: update this to use the number of qubits from the block encodings
         carleman_truncation_level = 3
         ode_degree = 3
-        number_of_qubits_encoding_F1 = 70
-        number_of_ancillas_used_to_block_encode_F1 = 5
+        number_of_qubits_encoding_system = (
+            self.block_encode_linear_term.count_encoding_qubits()
+        )
+
+        # TODO: update this to find max over all ancilla counts
+        max_number_of_ancillas_used_to_block_encode_terms = Max(
+            self.block_encode_linear_term.count_block_encoding_ancilla_qubits()
+        )
         number_of_qubits = (
-            number_of_qubits_encoding_F1 * (carleman_truncation_level + ode_degree)
-            + number_of_ancillas_used_to_block_encode_F1
+            number_of_qubits_encoding_system * (carleman_truncation_level + ode_degree)
+            + max_number_of_ancillas_used_to_block_encode_terms
             + 3 * ceiling(log(carleman_truncation_level, 2))
             + ceiling(log(ode_degree, 2))
         )
         return number_of_qubits
-
-
-def get_block_encoding_costs_from_carleman_requirements(truncation_error):
-    warnings.warn("This function is not fully implemented.", UserWarning)
-    return 1
