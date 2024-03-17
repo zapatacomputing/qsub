@@ -98,7 +98,7 @@ def get_taylor_qlsa_num_block_encoding_calls(
     failure_probability: float,
     subnormalization: float,
     condition_number: float,
-) -> float:
+) -> tuple[float, float]:
     """Get the number of block encoding calls for the Taylor QLSA algorithm
     of arXiv:2305.11352 as shown in Thm. 1.
 
