@@ -1,5 +1,5 @@
 from typing import Optional
-from ...subroutine_model import SubroutineModel
+from qsub.subroutine_model import SubroutineModel
 from qsub.utils import consume_fraction_of_error_budget
 import warnings
 import numpy as np

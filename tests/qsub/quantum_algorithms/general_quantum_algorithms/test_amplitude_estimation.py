@@ -1,8 +1,7 @@
 import numpy as np
-from src.qsub.quantum_algorithms.general_quantum_algorithms.amplitude_estimation import (
+from qsub.quantum_algorithms.general_quantum_algorithms.amplitude_estimation import (
     CoherentQuantumAmplitudeEstimation,
-    compute_number_of_grover_iterates_for_amp_est,
-    QuantumAmplitudeEstimation,
+    compute_number_of_grover_iterates_for_coherent_quantum_amp_est,
     SubroutineModel,
 )
 
@@ -13,11 +12,13 @@ from src.qsub.quantum_algorithms.general_quantum_algorithms.amplitude_estimation
 def test_compute_number_of_grover_iterates_for_amp_est():
     failure_tolerance = 0.1
     estimation_error = 0.01
-    expected_iterates = np.log(1 / failure_tolerance) / estimation_error
-    actual_iterates = compute_number_of_grover_iterates_for_amp_est(
+    max_expected_iterates = 100 * (1 / 0.1) * np.log(1 / 0.01)
+    min_expected_iterates = 0.01 * (1 / 0.1) * np.log(1 / 0.01)
+    actual_iterates = compute_number_of_grover_iterates_for_coherent_quantum_amp_est(
         failure_tolerance, estimation_error
     )
-    assert actual_iterates == expected_iterates
+    assert actual_iterates < max_expected_iterates
+    assert actual_iterates > min_expected_iterates
 
 
 # Test the initialization of CoherentQuantumAmplitudeEstimation

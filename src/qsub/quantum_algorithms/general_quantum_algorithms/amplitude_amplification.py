@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Optional
-from ...subroutine_model import SubroutineModel
+from qsub.subroutine_model import SubroutineModel
 
 
 class ObliviousAmplitudeAmplification(SubroutineModel):
