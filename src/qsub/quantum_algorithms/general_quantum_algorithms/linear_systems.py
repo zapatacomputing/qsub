@@ -7,7 +7,7 @@ from typing import Union, Optional
 import math
 from qsub.utils import consume_fraction_of_error_budget
 from qsub.generic_block_encoding import GenericLinearSystemBlockEncoding
-from sympy import Basic, sqrt, log, pi, exp
+from sympy import Basic, sqrt, log, pi, exp, Float
 
 
 class TaylorQLSA(SubroutineModel):
@@ -81,12 +81,13 @@ class TaylorQLSA(SubroutineModel):
 
         # Set block encoding requirements
         self.linear_system_block_encoding.set_requirements(
-            failure_tolerance=linear_system_block_encoding_failure_tolerance,
+            failure_tolerance=linear_system_block_encoding_failure_tolerance
+            / n_calls_to_A,
         )
 
         # Set block encoding requirements
         self.prepare_b_vector.set_requirements(
-            failure_tolerance=prepare_b_vector_failure_tolerance,
+            failure_tolerance=prepare_b_vector_failure_tolerance / n_calls_to_b,
         )
 
     def count_qubits(self):
@@ -119,24 +120,47 @@ def get_taylor_qlsa_num_block_encoding_calls(
             "failure_probability must be less than or equal to 0.24 and condition_number must be greater than or equal to sqrt(12)."
         )
 
-    term1 = (1741 * subnormalization * np.exp(1) / 500) * sqrt(condition_number**2 + 1)
-    term2 = ((133 / 125) + (4 / (25 * condition_number ** (1 / 3)))) * np.pi * log(
-        2 * condition_number + 3
-    ) + 1
-    term3 = (351 / 50) * log(2 * condition_number + 3) ** 2
-    term4 = log((451 * log(2 * condition_number + 3) ** 2) / failure_probability) + 1
-    term5 = subnormalization * condition_number * log(32 / failure_probability)
+    if isinstance(condition_number, float):
+        term1 = (1741 * subnormalization * np.exp(1) / 500) * np.sqrt(
+            condition_number**2 + 1
+        )
+        term2 = (
+            (133 / 125) + (4 / (25 * condition_number ** (1 / 3)))
+        ) * np.pi * np.log(2 * condition_number + 3) + 1
+        term3 = (351 / 50) * np.log(2 * condition_number + 3) ** 2
+        term4 = (
+            np.log((451 * np.log(2 * condition_number + 3) ** 2) / failure_probability)
+            + 1
+        )
+        term5 = subnormalization * condition_number * np.log(32 / failure_probability)
 
-    Q_star = term1 * term2 + term3 * term4 + term5
+        Q_star = term1 * term2 + term3 * term4 + term5
 
-    number_of_calls_to_A = Q_star / (0.39 - 0.204 * failure_probability)
-    number_of_calls_to_b = 2 * number_of_calls_to_A
+        number_of_calls_to_A = Q_star / (0.39 - 0.204 * failure_probability)
+        number_of_calls_to_b = 2 * number_of_calls_to_A
+    else:
+        term1 = (1741 * subnormalization * np.exp(1) / 500) * sqrt(
+            condition_number**2 + 1
+        )
+        term2 = ((133 / 125) + (4 / (25 * condition_number ** (1 / 3)))) * np.pi * log(
+            2 * condition_number + 3
+        ) + 1
+        term3 = (351 / 50) * log(2 * condition_number + 3) ** 2
+        term4 = (
+            log((451 * log(2 * condition_number + 3) ** 2) / failure_probability) + 1
+        )
+        term5 = subnormalization * condition_number * np.log(32 / failure_probability)
 
-    # Convert to float if inputs are floats
-    if not isinstance(subnormalization, Basic) and not isinstance(
-        condition_number, Basic
-    ):
-        number_of_calls_to_A = float(number_of_calls_to_A)
-        number_of_calls_to_b = float(number_of_calls_to_b)
+        Q_star = term1 * term2 + term3 * term4 + term5
+
+        number_of_calls_to_A = Q_star / (0.39 - 0.204 * failure_probability)
+        number_of_calls_to_b = 2 * number_of_calls_to_A
+
+    # # Convert to float if inputs are floats
+    # if not isinstance(subnormalization, Basic) and not isinstance(
+    #     condition_number, Float
+    # ):
+    #     number_of_calls_to_A = float(number_of_calls_to_A)
+    #     number_of_calls_to_b = float(number_of_calls_to_b)
 
     return number_of_calls_to_A, number_of_calls_to_b
