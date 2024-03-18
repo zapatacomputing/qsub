@@ -1,7 +1,6 @@
 from typing import Optional
 from qsub.subroutine_model import SubroutineModel
 from qsub.utils import consume_fraction_of_error_budget
-import warnings
 import numpy as np
 from qsub.generic_block_encoding import GenericBlockEncoding
 
@@ -295,8 +294,8 @@ class LBMDragCoefficientsReflection(SubroutineModel):
         # Set quantum_square requirements
         self.quantum_square.set_requirements(
             failure_tolerance=quantum_square_failure_tolerance,
-            number_of_bits=number_of_bits_per_spatial_register,
-            max_n_bits=2 * number_of_bits_per_spatial_register,
+            number_of_bits_total=2 * number_of_bits_per_spatial_register,
+            number_of_bits_above_decimal_place=2 * number_of_bits_per_spatial_register,
         )
 
     def get_subnormalization(self):
