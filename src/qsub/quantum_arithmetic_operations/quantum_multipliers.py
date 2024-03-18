@@ -1,5 +1,5 @@
 from typing import Optional
-from ..subroutine_model import SubroutineModel
+from qsub.subroutine_model import SubroutineModel
 import numpy as np
 
 
@@ -25,8 +25,8 @@ class GidneyMultiplier(SubroutineModel):
     def set_requirements(
         self,
         failure_tolerance: float = None,
-        number_of_bits: float = None,
-        max_n_bits: float = None,
+        number_of_bits_total: float = None,
+        number_of_bits_above_decimal_place: float = None,
     ):
         args = locals()
         # Clean up the args dictionary before setting requirements
@@ -48,18 +48,20 @@ class GidneyMultiplier(SubroutineModel):
         # Allot all failure tolerance to T gates
         t_gate_failure_tolerance = self.requirements["failure_tolerance"]
 
-        n_bits = self.requirements["number_of_bits"]
+        n_bits = self.requirements["number_of_bits_total"]
         # Set max number of bits needed to encode the square
-        max_n_bits = self.requirements["max_n_bits"]
+        number_of_bits_above_decimal_place = self.requirements[
+            "number_of_bits_above_decimal_place"
+        ]
 
         # Set number of times T gate is called using the MUL_n,p T-count formula
         # TODO: double check this formula with the paper: https://arxiv.org/pdf/2312.15871.pdf
         self.t_gate.number_of_times_called = (
             4 * n_bits**2
             - 8 * n_bits
-            + 8 * n_bits * max_n_bits
-            - 8 * max_n_bits**2
-            + 8 * max_n_bits
+            + 8 * n_bits * number_of_bits_above_decimal_place
+            - 8 * number_of_bits_above_decimal_place**2
+            + 8 * number_of_bits_above_decimal_place
         )
 
         # Set the requirements for the T gate
