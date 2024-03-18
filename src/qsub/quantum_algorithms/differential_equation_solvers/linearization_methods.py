@@ -4,7 +4,7 @@ from qsub.utils import consume_fraction_of_error_budget
 
 from typing import Optional
 import warnings
-from sympy import symbols, Max, ceiling, log
+from sympy import symbols, Max, ceiling, log, Basic
 
 
 class CarlemanBlockEncoding(GenericBlockEncoding):
@@ -65,18 +65,36 @@ class CarlemanBlockEncoding(GenericBlockEncoding):
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
 
-        # Allot time discretization budget
+        # Allot truncation level failure tolerance budget
         (
             truncation_error,
             remaining_failure_tolerance,
         ) = consume_fraction_of_error_budget(0.5, remaining_failure_tolerance)
+
+        # TODO: may eventually want the Carleman block encoding to consume some
+        # failure tolerance based on the degree that it uses (or at some point we may want
+        # to allow this degree to be set by this failure rate consumption)
+        (
+            linear_block_encoding_failure_tolerance,
+            remaining_failure_tolerance,
+        ) = consume_fraction_of_error_budget(0.3, remaining_failure_tolerance)
+
+        (
+            quadratic_block_encoding_failure_tolerance,
+            remaining_failure_tolerance,
+        ) = consume_fraction_of_error_budget(0.3, remaining_failure_tolerance)
+
+        (
+            cubic_block_encoding_failure_tolerance,
+            remaining_failure_tolerance,
+        ) = consume_fraction_of_error_budget(0.3, remaining_failure_tolerance)
 
         # Set number of calls to the linear term block encoding
         self.block_encode_linear_term.number_of_times_called = 1
 
         # Set linear term block encoding requirements
         self.block_encode_linear_term.set_requirements(
-            failure_tolerance=self.requirements["failure_tolerance"],
+            failure_tolerance=linear_block_encoding_failure_tolerance,
         )
 
         # Set number of calls to the quadratic term block encoding
@@ -84,7 +102,7 @@ class CarlemanBlockEncoding(GenericBlockEncoding):
 
         # Set quadratic term block encoding requirements
         self.block_encode_quadratic_term.set_requirements(
-            failure_tolerance=self.requirements["failure_tolerance"],
+            failure_tolerance=quadratic_block_encoding_failure_tolerance,
         )
 
         # Set number of calls to the cubic term block encoding
@@ -92,18 +110,31 @@ class CarlemanBlockEncoding(GenericBlockEncoding):
 
         # Set cubic term block encoding requirements
         self.block_encode_cubic_term.set_requirements(
-            failure_tolerance=self.requirements["failure_tolerance"],
+            failure_tolerance=cubic_block_encoding_failure_tolerance,
         )
 
     def get_subnormalization(self):
         # TODO: make these numbers variable inputs, possibly fed in through requirements
         carleman_truncation_level = 3
         ode_degree = 3
-        max_block_encoding_subnormalization = Max(
-            self.block_encode_linear_term.get_subnormalization(),
-            self.block_encode_quadratic_term.get_subnormalization(),
-            self.block_encode_cubic_term.get_subnormalization(),
-        )
+        if (
+            isinstance(self.block_encode_linear_term.get_subnormalization(), Basic)
+            or isinstance(
+                self.block_encode_quadratic_term.get_subnormalization(), Basic
+            )
+            or isinstance(self.block_encode_cubic_term.get_subnormalization(), Basic)
+        ):
+            max_block_encoding_subnormalization = Max(
+                self.block_encode_linear_term.get_subnormalization(),
+                self.block_encode_quadratic_term.get_subnormalization(),
+                self.block_encode_cubic_term.get_subnormalization(),
+            )
+        else:
+            max_block_encoding_subnormalization = max(
+                self.block_encode_linear_term.get_subnormalization(),
+                self.block_encode_quadratic_term.get_subnormalization(),
+                self.block_encode_cubic_term.get_subnormalization(),
+            )
 
         # Upper bound on subnormalization from paper (TODO: add reference)
         subnormalization = (
