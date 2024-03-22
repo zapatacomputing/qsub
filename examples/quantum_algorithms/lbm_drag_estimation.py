@@ -34,10 +34,15 @@ from qsub.quantum_arithmetic_operations.quantum_square_roots import GidneySquare
 from qsub.quantum_arithmetic_operations.quantum_multipliers import GidneyMultiplier
 
 
-def generate_graphs():
+def generate_graphs(
+    evolution_time=0.0001,
+    failure_tolerance=1e-1,
+    kappa_P=1,
+    relative_estimation_error=0.1,
+):
     # TODO: determine range of evolution_time
-    evolution_time = 1  # Example value
-    failure_tolerance = 1e-4  # Example value
+    # evolution_time = 0.0001  # Example value
+    # failure_tolerance = 1e-1  # Example value
     # TODO: determine range of mu_P_A
     mu_P_A = -0.001
     norm_inhomogeneous_term_vector = 0.0  # ODE is homogeneous
@@ -45,7 +50,7 @@ def generate_graphs():
     norm_x_t = 1.0  # Example value
     A_stable = False
     # TODO: determine range of kappa_P
-    kappa_P = 1
+    # kappa_P = 1
     number_of_spatial_grid_points = 4.096e10
     number_of_velocity_grid_points = 27
     x_length_in_meters = 0.1
@@ -53,7 +58,7 @@ def generate_graphs():
     z_length_in_meters = 0.08
     sphere_radius_in_meters = 0.005
     time_discretization_in_seconds = 5.1928e-5
-    relative_estimation_error = 0.01
+    # relative_estimation_error = 0.1
 
     cell_volume = (
         x_length_in_meters
@@ -168,5 +173,21 @@ def generate_graphs():
     graph = drag_est.display_hierarchy()
     graph.view(cleanup=True)  # This will open the generated diagram
 
+    return counts["t_gate"]
 
-generate_graphs()
+
+low_cost = generate_graphs(
+    evolution_time=0.001,
+    failure_tolerance=0.1,
+    kappa_P=1,
+    relative_estimation_error=0.1,
+)
+high_cost = generate_graphs(
+    evolution_time=1000,
+    failure_tolerance=0.0001,
+    kappa_P=1000,
+    relative_estimation_error=0.001,
+)
+
+print("'low cost' t gate count", low_cost)
+print("high cost t gate count", high_cost)
