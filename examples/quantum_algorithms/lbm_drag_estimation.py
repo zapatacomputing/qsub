@@ -189,5 +189,28 @@ high_cost = generate_graphs(
     relative_estimation_error=0.001,
 )
 
+low_kappa = generate_graphs(
+    evolution_time=1,
+    failure_tolerance=0.1,
+    kappa_P=1,
+    relative_estimation_error=0.001,
+)
+medium_kappa = generate_graphs(
+    evolution_time=1,
+    failure_tolerance=0.1,
+    kappa_P=100,
+    relative_estimation_error=0.001,
+)
+high_kappa = generate_graphs(
+    evolution_time=1,
+    failure_tolerance=0.1,
+    kappa_P=10000,
+    relative_estimation_error=0.001,
+)
+
 print("'low cost' t gate count", low_cost)
 print("high cost t gate count", high_cost)
+
+print("kappa = 1 t gate count", low_kappa)
+print("kappa = 100 t gate count", medium_kappa)
+print("kappa = 10000 t gate count", high_kappa)
