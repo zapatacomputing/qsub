@@ -19,15 +19,6 @@ class LBMDragEstimationData:
     solve_quantum_ode: SubroutineModel =  SubroutineModel("solve_quantum_ode") 
     mark_drag_vector: SubroutineModel = SubroutineModel("mark_drag_vector")
 
-@dataclass
-class LBMDragReflectionData:
-    failure_tolerance: float = 0
-
-@dataclass
-class SphereBoundaryOracleData:
-    failure_tolerance: float = None,
-    radius: float = None,
-    grid_spacing: float = None,
 
 class LBMDragEstimation(SubroutineModel):
     def __init__(

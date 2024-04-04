@@ -4,13 +4,6 @@ from dataclasses import dataclass
 from typing import Optional
 import warnings
 
-@dataclass
-class CarlemanBlockEncodingData:
-    failure_tolerance: float = 0.1
-    kappa_P: float =0
-    mu_P_A: float = 0   
-    A_stable: float = 0
-
 
 class CarlemanBlockEncoding(SubroutineModel):
     def __init__(
