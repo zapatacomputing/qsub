@@ -2,9 +2,7 @@ import numpy as np
 from typing import Optional
 from ...subroutine_model import SubroutineModel
 import warnings
-from qsub.utils import create_data_class_from_dict
-
-
+from data_classes import StatePreparationOracleData, MarkedSubspaceOracleData
 class QuantumAmplitudeEstimation(SubroutineModel):
     def __init__(
         self,
@@ -46,17 +44,14 @@ class QuantumAmplitudeEstimation(SubroutineModel):
         )
         self.mark_subspace.number_of_times_called = 2 * number_of_grover_iterates
 
-        state_preparation_oracle_requirements_dict= {"failure_tolerance":subroutine_error_budget_allocation[0]
-            / self.state_preparation_oracle.number_of_times_called
-            * remaining_failure_tolerance}
+        StatePreparationOracleData.failure_tolerance= (subroutine_error_budget_allocation[0]/ 
+            self.state_preparation_oracle.number_of_times_called)* remaining_failure_tolerance
+        MarkedSubspaceOracleData.failure_tolerance = (subroutine_error_budget_allocation[1]
+            / self.mark_subspace.number_of_times_called) * remaining_failure_tolerance
 
-        mark_subspace_requirements_dict = {"failure_tolerance":subroutine_error_budget_allocation[1]
-            / self.mark_subspace.number_of_times_called
-            * remaining_failure_tolerance, }
+        self.state_preparation_oracle.set_requirements(StatePreparationOracleData)
 
-        self.state_preparation_oracle.set_requirements(create_data_class_from_dict(state_preparation_oracle_requirements_dict))
-
-        self.mark_subspace.set_requirements(create_data_class_from_dict(mark_subspace_requirements_dict))
+        self.mark_subspace.set_requirements(MarkedSubspaceOracleData)
 
     def count_qubits(self):
         return self.state_preparation_oracle.count_qubits()
@@ -117,17 +112,14 @@ class IterativeQuantumAmplitudeEstimation(SubroutineModel):
         self.state_preparation_oracle.number_of_times_called = number_of_grover_iterates
         self.mark_subspace.number_of_times_called = number_of_grover_iterates
 
-        state_preparation_oracle_requirements_dict= {"failure_tolerance":subroutine_error_budget_allocation[0]
-                    / self.state_preparation_oracle.number_of_times_called
-                    * remaining_failure_tolerance}
+        StatePreparationOracleData.failure_tolerance=(subroutine_error_budget_allocation[0]
+                    / self.state_preparation_oracle.number_of_times_called)* remaining_failure_tolerance
+        MarkedSubspaceOracleData.failure_tolerance = (subroutine_error_budget_allocation[1]
+                    / self.mark_subspace.number_of_times_called)* remaining_failure_tolerance
 
-        mark_subspace_requirements_dict = {"failure_tolerance":subroutine_error_budget_allocation[1]
-                    / self.mark_subspace.number_of_times_called
-                    * remaining_failure_tolerance, }
+        self.state_preparation_oracle.set_requirements(StatePreparationOracleData)
 
-        self.state_preparation_oracle.set_requirements(create_data_class_from_dict(state_preparation_oracle_requirements_dict))
-
-        self.mark_subspace.set_requirements(create_data_class_from_dict(mark_subspace_requirements_dict))
+        self.mark_subspace.set_requirements(MarkedSubspaceOracleData)
 
     def count_qubits(self):
         return self.state_preparation_oracle.count_qubits()

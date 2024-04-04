@@ -1,13 +1,8 @@
 import numpy as np
 from typing import Optional
 from ...subroutine_model import SubroutineModel
-from dataclasses import dataclass
-from qsub.utils import create_data_class_from_dict
+from data_classes import StatePreparationOracleData, MarkedSubspaceOracleData
 
-@dataclass
-class ObliviousAmplitudeAmplificationData:
-      input_state_squared_overlap:float = 0.5
-      failure_tolerance: float = 0.001
 
 class ObliviousAmplitudeAmplification(SubroutineModel):
     def __init__(
@@ -45,13 +40,13 @@ class ObliviousAmplitudeAmplification(SubroutineModel):
 
         self.mark_subspace.number_of_times_called = number_of_grover_iterates
         
-        state_oracle_requirements_dict = {"failure_tolerance": subroutine_error_budget_allocation[0] \
-            * remaining_failure_tolerance }
-        mark_subspace_requirements_dict = {"failure_tolerance": subroutine_error_budget_allocation[1] \
-            * remaining_failure_tolerance }
-
-        self.state_preparation_oracle.set_requirements(create_data_class_from_dict(state_oracle_requirements_dict))
-        self.mark_subspace.set_requirements(create_data_class_from_dict(mark_subspace_requirements_dict))
+        StatePreparationOracleData.failure_tolerance = subroutine_error_budget_allocation[0] \
+            * remaining_failure_tolerance
+        MarkedSubspaceOracleData.failure_tolerance = subroutine_error_budget_allocation[1] \
+            * remaining_failure_tolerance
+        
+        self.state_preparation_oracle.set_requirements(StatePreparationOracleData)
+        self.mark_subspace.set_requirements(MarkedSubspaceOracleData)
 
     def count_qubits(self):
         return self.state_preparation_oracle.count_qubits()

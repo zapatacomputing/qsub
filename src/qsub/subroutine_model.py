@@ -12,17 +12,17 @@ class SubroutineModel(ABC):
     def __init__(self, task_name: str, **kwargs):
         self.task_name = task_name
         self.requirements = {}
+        self.inner_subroutine = None
         self.number_of_times_called: Optional[Union[float, int]] = None
         for attr, value in kwargs.items():
             if isinstance(value, SubroutineModel):
                 setattr(self, attr, value)
        
     def set_requirements(self,requirements:dataclass):
-        if is_dataclass(requirements):
-            self.requirements = asdict(requirements)
-            assert "failure_tolerance"  in self.requirements
+        assert is_dataclass(requirements)
+        self.requirements = asdict(requirements)
+        assert "failure_tolerance"  in self.requirements
 
-    @abstractmethod
     def populate_requirements_for_subroutines(self):
         pass
 
@@ -251,3 +251,7 @@ class SubroutineModel(ABC):
         )
 
         fig.show()
+
+    def delegate(self, inner_subroutine):
+        self.inner_subroutine  = inner_subroutine
+        return self

@@ -6,7 +6,7 @@ from ...subroutine_model import SubroutineModel
 from typing import Optional
 import math
 from qsub.utils import consume_fraction_of_error_budget
-from qsub.utils import create_data_class_from_dict
+from data_classes import LinearSystemBlockEncodingData, StatePreparationOracleData
 
 
 class TaylorQLSA(SubroutineModel):
@@ -49,11 +49,10 @@ class TaylorQLSA(SubroutineModel):
         self.prepare_b_vector.number_of_times_called = n_calls_to_b
 
         # Set block encoding requirements
-        linear_system_block_encoding_dict = {"failure_tolerance": linear_system_block_encoding_failure_tolerance }
-        prepare_b_vector_dict = {"failure_tolerance": prepare_b_vector_failure_tolerance}
-
-        self.linear_system_block_encoding.set_requirements(create_data_class_from_dict(linear_system_block_encoding_dict))
-        self.prepare_b_vector.set_requirements(create_data_class_from_dict(prepare_b_vector_dict))
+        LinearSystemBlockEncodingData.failure_tolerance = linear_system_block_encoding_failure_tolerance
+        StatePreparationOracleData.failure_tolerance=prepare_b_vector_failure_tolerance
+        self.linear_system_block_encoding.set_requirements(LinearSystemBlockEncodingData)
+        self.prepare_b_vector.set_requirements(StatePreparationOracleData)
 
     def count_qubits(self):
         # From Theorem 1 in https://arxiv.org/abs/2305.11352
