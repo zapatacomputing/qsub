@@ -93,9 +93,7 @@ class SubroutineModel(Subtask):
         # graph = self.__super__.generate_requirements_dag(graph, parent_name)
 
         # Create subroutine node for the subtask
-        subroutine_node_name = (
-            f"subroutine_{type(self).__name__}_{self.requirements.task_name}"
-        )
+        subroutine_node_name = f"{type(self).__name__}({self.requirements.task_name})"
         graph.node(
             subroutine_node_name,
             shape="ellipse",
@@ -140,29 +138,22 @@ class FixedPointAmplitudeAmplification(SubroutineModel):
         self.prepare_state = prepare_state
         self.mark_subspace = mark_subspace
 
-    def allocate_failure_tolerance_budget(self):
-        # Allocate failure tolerance
-        fractional_failure_budget_allocation = {
-            "fraction_consumed": 0.5,
-            "fraction_to_prepare_state": 0.25,
-            "fraction_to_mark_subspace": 0.25,
-        }
+    def allocate_failure_tolerance_budget(
+        self,
+        fraction_consumed=0.5,
+        fraction_to_prepare_state=0.25,
+        fraction_to_mark_subspace=0.25,
+    ):
 
         failure_budget_allocation = {
-            "consumed_failure_tolerance": fractional_failure_budget_allocation[
-                "fraction_consumed"
-            ]
+            "consumed_failure_tolerance": fraction_consumed
             * self.requirements.failure_tolerance,
-            "prepare_state_aggregate_failure_tolerance": fractional_failure_budget_allocation[
-                "fraction_to_prepare_state"
-            ]
+            "prepare_state_aggregate_failure_tolerance": fraction_to_prepare_state
             * self.requirements.failure_tolerance,
-            "mark_subspace_aggregate_failure_tolerance": fractional_failure_budget_allocation[
-                "fraction_to_mark_subspace"
-            ]
+            "mark_subspace_aggregate_failure_tolerance": fraction_to_mark_subspace
             * self.requirements.failure_tolerance,
         }
-        # Check that budget is not exceeded
+        # Check that budget is not exceeded after allocation
         assert (
             sum(failure_budget_allocation.values())
             <= self.requirements.failure_tolerance
@@ -220,24 +211,29 @@ def compute_number_of_grover_iterates_for_fixed_point_amplitude_amplification(
 
 
 @dataclass
-class BoringTaskRequirements(SubtaskRequirements):
-    boring_requirement: float = None
-    task_name: str = "boring_task"
+class PrepareDragVectorRequirements(SubtaskRequirements):
+    task_name: str = "prepare_drag_vector"
 
 
-class BoringSubroutineModelA(SubroutineModel):
+@dataclass
+class MarkODESolutionRequirements(SubtaskRequirements):
+    task_name: str = "mark_ode_solution"
+
+
+class BhargavDragVectorPreparation(SubroutineModel):
     def __init__(
         self,
-        more_boring_task: Optional[Union[Subtask, SubroutineModel]] = Subtask(),
+        requirements: PrepareDragVectorRequirements = None,
+        t_gate: Optional[Union[Subtask, SubroutineModel]] = Subtask(),
     ):
-        super().__init__()
-        self.more_boring_task = more_boring_task
+        super().__init__(requirements=requirements)
+        self.t_gate = t_gate
 
     def allocate_failure_tolerance_budget(self):
         # Allocate failure tolerance
         fractional_failure_budget_allocation = {
             "fraction_consumed": 0.6,
-            "fraction_to_more_boring_task": 0.4,
+            "fraction_to_t_gate": 0.4,
         }
 
         failure_budget_allocation = {
@@ -245,8 +241,8 @@ class BoringSubroutineModelA(SubroutineModel):
                 "fraction_consumed"
             ]
             * self.requirements.failure_tolerance,
-            "more_boring_task_failure_tolerance": fractional_failure_budget_allocation[
-                "fraction_to_more_boring_task"
+            "t_gate_failure_tolerance": fractional_failure_budget_allocation[
+                "fraction_to_t_gate"
             ]
             * self.requirements.failure_tolerance,
         }
@@ -259,28 +255,34 @@ class BoringSubroutineModelA(SubroutineModel):
         return failure_budget_allocation
 
     def assign_requirements_from_failure_budget(self, failure_budget_allocation):
-        # Generate requirements for more_boring_task
-        more_boring_task_requirements = MoreBoringTaskRequirements(
-            failure_tolerance=failure_budget_allocation[
-                "more_boring_task_failure_tolerance"
-            ]
+        # Generate requirements for t_gate
+        t_gate_requirements = TGateRequirements(
+            failure_tolerance=failure_budget_allocation["t_gate_failure_tolerance"]
         )
-        self.more_boring_task.set_subtask_requirements(more_boring_task_requirements)
+        self.t_gate.set_subtask_requirements(t_gate_requirements)
+        # T Gate is called 42 times per Bhargav routine
+        self.t_gate.requirements.number_of_times_called = 42
 
 
-class BoringSubroutineModelB(SubroutineModel):
+@dataclass
+class TGateRequirements(SubtaskRequirements):
+    task_name: str = "t_gate"
+
+
+class PsiQuantumODESolver(SubroutineModel):
     def __init__(
         self,
-        more_boring_task: Optional[Union[Subtask, SubroutineModel]] = Subtask(),
+        requirements: MarkODESolutionRequirements = None,
+        t_gate: Optional[Union[Subtask, SubroutineModel]] = Subtask(),
     ):
-        super().__init__()
-        self.more_boring_task = more_boring_task
+        super().__init__(requirements=requirements)
+        self.t_gate = t_gate
 
     def allocate_failure_tolerance_budget(self):
         # Allocate failure tolerance
         fractional_failure_budget_allocation = {
             "fraction_consumed": 0.8,
-            "fraction_to_more_boring_task": 0.2,
+            "fraction_to_t_gate": 0.2,
         }
 
         failure_budget_allocation = {
@@ -288,8 +290,8 @@ class BoringSubroutineModelB(SubroutineModel):
                 "fraction_consumed"
             ]
             * self.requirements.failure_tolerance,
-            "more_boring_task_failure_tolerance": fractional_failure_budget_allocation[
-                "fraction_to_more_boring_task"
+            "t_gate_failure_tolerance": fractional_failure_budget_allocation[
+                "fraction_to_t_gate"
             ]
             * self.requirements.failure_tolerance,
         }
@@ -302,13 +304,13 @@ class BoringSubroutineModelB(SubroutineModel):
         return failure_budget_allocation
 
     def assign_requirements_from_failure_budget(self, failure_budget_allocation):
-        # Generate requirements for more_boring_task
-        more_boring_task_requirements = MoreBoringTaskRequirements(
-            failure_tolerance=failure_budget_allocation[
-                "more_boring_task_failure_tolerance"
-            ]
+        # Generate requirements for t_gate
+        t_gate_requirements = TGateRequirements(
+            failure_tolerance=failure_budget_allocation["t_gate_failure_tolerance"]
         )
-        self.more_boring_task.set_subtask_requirements(more_boring_task_requirements)
+        self.t_gate.set_subtask_requirements(t_gate_requirements)
+        # T Gate is called 73 times per Bhargav routine
+        self.t_gate.requirements.number_of_times_called = 73
 
 
 @dataclass
@@ -317,16 +319,16 @@ class MoreBoringTaskRequirements(SubtaskRequirements):
     task_name: str = "more_boring_task"
 
 
-fun_requirements = AmplifyAmplitudeRequirements(
+amp_amp_requirements = AmplifyAmplitudeRequirements(
     failure_tolerance=0.01,
     initial_state_overlap=0.5,
-    prepare_state_requirements=SubtaskRequirements(),
-    mark_subspace_requirements=SubtaskRequirements(),
+    prepare_state_requirements=PrepareDragVectorRequirements(),
+    mark_subspace_requirements=MarkODESolutionRequirements(),
 )
 
-amp_amp = FixedPointAmplitudeAmplification(requirements=fun_requirements)
-amp_amp.prepare_state = BoringSubroutineModelA()
-amp_amp.mark_subspace = BoringSubroutineModelB()
+amp_amp = FixedPointAmplitudeAmplification(requirements=amp_amp_requirements)
+amp_amp.prepare_state = BhargavDragVectorPreparation()
+amp_amp.mark_subspace = PsiQuantumODESolver()
 
 
 amp_amp.recursively_assign_requirements_to_all_subtasks()
