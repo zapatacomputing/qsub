@@ -494,10 +494,17 @@ class LBMLinearTermBlockEncoding(GenericBlockEncoding):
         super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
-        # Set number of calls to the t_gate subroutine
-        self.t_gate.number_of_times_called = 635 * np.log2(
+        # Set number of calls to the t_gate subroutine (NOTE: T gate counts 
+        # will be a sum of t gates from streaming matrix and F1 collision matrix)
+
+        n_f1_tgates = 635 * np.log2(
             555 / self.requirements["failure_tolerance"]
-        )
+        )  
+        n_spatial_qubits = np.log2(self.requirements["number_of_spatial_grid_points"])
+        n_streaming_tgates = 12 * n_spatial_qubits**2 + 32 * n_spatial_qubits + 12*(n_spatial_qubits-1) 
+        + 72*(n_spatial_qubits-1)
+
+        self.t_gate.number_of_times_called = n_f1_tgates + n_streaming_tgates
         print("f1 count is:", self.t_gate.number_of_times_called)
 
         # Set t_gate requirements
@@ -507,7 +514,7 @@ class LBMLinearTermBlockEncoding(GenericBlockEncoding):
         )
 
     def get_subnormalization(self):
-        # The subnormalization is set to a constant value of 1
+        # NOTE: subnormalization comes from linear combination of block encoding lemma
         number_of_velocity_grid_points = self.requirements[
             "number_of_velocity_grid_points"
         ]
@@ -515,6 +522,8 @@ class LBMLinearTermBlockEncoding(GenericBlockEncoding):
         return subnormalization
 
     def count_encoding_qubits(self):
+        """The number of qubits used to store the linear factor in the solution vector
+        """
         number_of_spatial_grid_points = self.requirements[
             "number_of_spatial_grid_points"
         ]
@@ -527,13 +536,24 @@ class LBMLinearTermBlockEncoding(GenericBlockEncoding):
         return number_of_qubits
 
     def count_block_encoding_ancilla_qubits(self):
-        number_of_velocity_grid_points = (
-            self.requirements["number_of_velocity_grid_points"] + 1
-        )
-        number_of_block_encoding_ancilla_qubits = (
-            np.ceil(np.log2(number_of_velocity_grid_points)) + 1
-        )
-        return number_of_block_encoding_ancilla_qubits
+        """The number of qubits that show up in the triple that defines the block encoding
+           This is the sum of ancilla qubits from the streaming and linear collision matrix.
+        """
+   
+        number_of_velocity_grid_points = self.requirements[
+            "number_of_velocity_grid_points"
+        ]
+        number_of_spatial_grid_points = self.requirements[
+            "number_of_spatial_grid_points"
+        ]
+        number_of_qubits = np.ceil(np.log2(number_of_velocity_grid_points)) + 3 
+        + np.ceil(np.log2(number_of_spatial_grid_points)) + 1
+        return number_of_qubits
+
+    def count_qubits(self):
+        # For now (5/6/2024) this will return count_encoding_qubits + count_block_encoding_ancilla_qubits
+        return self.count_encoding_qubits + self.count_block_encoding_ancilla_qubits
+       
 
 
 class LBMQuadraticTermBlockEncoding(GenericBlockEncoding):
@@ -548,6 +568,8 @@ class LBMQuadraticTermBlockEncoding(GenericBlockEncoding):
     def set_requirements(
         self,
         failure_tolerance: float = None,
+        number_of_spatial_grid_points: float = None,
+        number_of_velocity_grid_points: float = None,
     ):
         args = locals()
         args.pop("self")
@@ -561,7 +583,10 @@ class LBMQuadraticTermBlockEncoding(GenericBlockEncoding):
 
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the t_gate subroutine
-        self.t_gate.number_of_times_called = 3000
+
+        log_n_spatial_qubits_squared = np.log2(self.requirements["number_of_spatial_grid_points"]**2)
+        self.t_gate.number_of_times_called  = 8*log_n_spatial_qubits_squared + 5965*np.log2(5187/self.requirements["failure_tolerance"])
+        -16 + 2* log_n_spatial_qubits_squared*(log_n_spatial_qubits_squared-1)
 
         # Set t_gate requirements
         self.t_gate.set_requirements(
@@ -569,14 +594,41 @@ class LBMQuadraticTermBlockEncoding(GenericBlockEncoding):
             / self.t_gate.number_of_times_called,
         )
 
+    def count_qubits(self):
+        # As of 5/6/2024 will just add block encoding qubits plus system qubits
+        return self.count_block_encoding_ancilla_qubits + self.count_encoding_qubits
+
     def get_subnormalization(self):
         # The subnormalization is set to a constant value of 1
-        return 1
+        number_of_velocity_grid_points = self.requirements[
+            "number_of_velocity_grid_points"
+        ]
+        subnormalization = 1 / (1.4444444 * number_of_velocity_grid_points)
+        return subnormalization
 
-    def count_qubits(self):
-        # The number of qubits is set to a constant value of 100
-        return 100
+    def count_encoding_qubits(self):
+        """The number of qubits used to store the quadratic factor in the solution vector
+        """
+        number_of_spatial_grid_points = self.requirements[
+            "number_of_spatial_grid_points"
+        ]
+        number_of_velocity_grid_points = self.requirements[
+            "number_of_velocity_grid_points"
+        ]
+        number_of_qubits = np.ceil(np.log2(number_of_spatial_grid_points)) + (
+            np.ceil(np.log2(number_of_velocity_grid_points))
+        )
+        return number_of_qubits
 
+    def count_block_encoding_ancilla_qubits(self):
+        """The number of qubits that show up in the triple that defines the block encoding
+        """
+   
+        number_of_velocity_grid_points = self.requirements[
+            "number_of_velocity_grid_points"
+        ]
+        number_of_qubits = np.ceil(np.log2(number_of_velocity_grid_points)) + 3
+        return number_of_qubits
 
 class LBMCubicTermBlockEncoding(GenericBlockEncoding):
     def __init__(
@@ -590,6 +642,8 @@ class LBMCubicTermBlockEncoding(GenericBlockEncoding):
     def set_requirements(
         self,
         failure_tolerance: float = None,
+        number_of_spatial_grid_points: float = None,
+        number_of_velocity_grid_points: float = None,
     ):
         args = locals()
         args.pop("self")
@@ -603,7 +657,9 @@ class LBMCubicTermBlockEncoding(GenericBlockEncoding):
 
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the t_gate subroutine
-        self.t_gate.number_of_times_called = 3000
+        log_n_spatial_qubits_cubed = np.log2(self.requirements["number_of_spatial_grid_points"]**3)
+        self.t_gate.number_of_times_called  = 8*log_n_spatial_qubits_cubed + 39991*np.log2(34775/self.requirements["failure_tolerance"])
+        -16 + 2* log_n_spatial_qubits_cubed*(log_n_spatial_qubits_cubed-1)
 
         # Set t_gate requirements
         self.t_gate.set_requirements(
@@ -612,9 +668,36 @@ class LBMCubicTermBlockEncoding(GenericBlockEncoding):
         )
 
     def get_subnormalization(self):
-        # The subnormalization is set to a constant value of 1
-        return 1
+        number_of_velocity_grid_points = self.requirements[
+            "number_of_velocity_grid_points"
+        ]
+        subnormalization = 1 / (1.44444444 * number_of_velocity_grid_points)
+        return subnormalization
 
     def count_qubits(self):
-        # The number of qubits is set to a constant value of 100
-        return 100
+        return self.count_block_encoding_ancilla_qubits + self.count_encoding_qubits
+
+    def count_block_encoding_ancilla_qubits(self):
+        """The number of qubits that show up in the triple that defines the block encoding
+           This is the sum of ancilla qubits from the streaming and linear collision matrix.
+        """
+   
+        number_of_velocity_grid_points = self.requirements[
+            "number_of_velocity_grid_points"
+        ]
+        number_of_qubits = np.ceil(np.log2(number_of_velocity_grid_points)) + 3
+        return number_of_qubits
+
+    def count_encoding_qubits(self):
+        """The number of qubits used to store the quadratic factor in the solution vector
+        """
+        number_of_spatial_grid_points = self.requirements[
+            "number_of_spatial_grid_points"
+        ]
+        number_of_velocity_grid_points = self.requirements[
+            "number_of_velocity_grid_points"
+        ]
+        number_of_qubits = np.ceil(np.log2(number_of_spatial_grid_points)) + (
+            np.ceil(np.log2(number_of_velocity_grid_points))
+        )
+        return number_of_qubits
