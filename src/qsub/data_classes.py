@@ -47,13 +47,31 @@ class LBMDragReflectionData:
 
 @dataclass
 class SphereBoundaryOracleData:
-    failure_tolerance: float = None,
-    radius: float = None,
-    grid_spacing: float = None,
+    failure_tolerance: float = None
+    radius: float = None
+    grid_spacing: float = None
 
 @dataclass
 class GenericLinearSystemBlockEncodingData:
         failure_tolerance: float = 0.1
-        kappa_P: float = 0.1,
+        kappa_P: float = 0.1
         mu_P_A: float = 0.1
         A_stable: float = 0.01 
+
+@dataclass
+class LBMLinearTermBlockEncodingData:
+    failure_tolerance: float = 0.1
+    number_of_spatial_grid_points: float = 0.1
+    number_of_velocity_grid_points: float = 0.1
+
+@dataclass
+class LBMQuadraticTermBlockEncodingData:
+    failure_tolerance: float = 0.1
+    number_of_spatial_grid_points: float = 0.1
+    number_of_velocity_grid_points: float = 0.1
+
+@dataclass
+class LBMCubicTermBlockEncodingData:
+    failure_tolerance: float = 0.1
+    number_of_spatial_grid_points: float = 0.1
+    number_of_velocity_grid_points: float = 0.1

@@ -381,21 +381,6 @@ class LBMLinearTermBlockEncoding(GenericBlockEncoding):
         super().__init__(task_name, requirements)
         self.t_gate = SubroutineModel("t_gate")
 
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-        number_of_spatial_grid_points: float = None,
-        number_of_velocity_grid_points: float = None,
-    ):
-        args = locals()
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-        self.requirements.update(args)
-        super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the t_gate subroutine (NOTE: T gate counts 
@@ -469,22 +454,6 @@ class LBMQuadraticTermBlockEncoding(GenericBlockEncoding):
         super().__init__(task_name, requirements)
         self.t_gate = SubroutineModel("t_gate")
 
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-        number_of_spatial_grid_points: float = None,
-        number_of_velocity_grid_points: float = None,
-    ):
-        args = locals()
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-        self.requirements.update(args)
-        super().set_requirements(**self.requirements)
-
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the t_gate subroutine
 
@@ -542,22 +511,6 @@ class LBMCubicTermBlockEncoding(GenericBlockEncoding):
     ):
         super().__init__(task_name, requirements)
         self.t_gate = SubroutineModel("t_gate")
-
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-        number_of_spatial_grid_points: float = None,
-        number_of_velocity_grid_points: float = None,
-    ):
-        args = locals()
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-        self.requirements.update(args)
-        super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the t_gate subroutine
