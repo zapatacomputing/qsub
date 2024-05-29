@@ -1,9 +1,6 @@
 import pytest
 from qsub.subroutine_model import SubroutineModel
-<<<<<<< HEAD
-=======
 from qsub.generic_block_encoding import GenericLinearSystemBlockEncoding
->>>>>>> code_design_changes
 from qsub.quantum_algorithms.general_quantum_algorithms.linear_systems import (
     TaylorQLSA,
     get_taylor_qlsa_num_block_encoding_calls,
@@ -41,15 +38,9 @@ def mock_data_class():
 
 def test_get_taylor_qlsa_num_block_encoding_calls_normal():
     # Test with normal parameters
-<<<<<<< HEAD
-    result_A, result_b = get_taylor_qlsa_num_block_encoding_calls(0.1, 1.0, 4.0)
-    assert isinstance(result_A, float)
-    assert isinstance(result_b, float)
-=======
     result = get_taylor_qlsa_num_block_encoding_calls(0.1, 1.0, 4.0)
     print(result)
     assert isinstance(result, float)
->>>>>>> code_design_changes
 
 
 def test_get_taylor_qlsa_num_block_encoding_calls_invalid_failure_probability():
@@ -70,35 +61,6 @@ def test_taylor_qlsa_init_with_block_encoding(linear_system_block_encoding, prep
     assert taylor_qlsa.linear_system_block_encoding.task_name == "linear_system_block_encoding"
 
 
-<<<<<<< HEAD
-def test_taylor_qlsa_init_without_block_encoding():
-    # Test initialization without linear_system_block_encoding
-    taylor_qlsa = TaylorQLSA()
-    assert (
-        taylor_qlsa.linear_system_block_encoding.task_name
-        == "linear_system_block_encoding"
-    )
-
-
-def test_taylor_qlsa_set_requirements():
-    # Test set_requirements method
-    taylor_qlsa = TaylorQLSA()
-    taylor_qlsa.set_requirements(
-        failure_tolerance=0.1,
-    )
-    assert taylor_qlsa.requirements == {
-        "failure_tolerance": 0.1,
-    }
-
-
-def test_taylor_qlsa_populate_requirements_for_subroutines():
-    # Test populate_requirements_for_subroutines method
-    taylor_qlsa = TaylorQLSA()
-    taylor_qlsa.set_requirements(
-        failure_tolerance=0.1,
-    )
-
-=======
 def test_taylor_qlsa_populate_requirements_for_subroutines(mock_data_class,
         linear_system_block_encoding, 
         prepare_b_vector
@@ -106,7 +68,6 @@ def test_taylor_qlsa_populate_requirements_for_subroutines(mock_data_class,
     # Test populate_requirements_for_subroutines method
     taylor_qlsa = TaylorQLSA(linear_system_block_encoding, prepare_b_vector)
     taylor_qlsa.set_requirements(mock_data_class)
->>>>>>> code_design_changes
     taylor_qlsa.populate_requirements_for_subroutines()
 
     # Define the expected set of symbol names

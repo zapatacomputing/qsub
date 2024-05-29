@@ -6,22 +6,6 @@ from qsub.generic_block_encoding import GenericBlockEncoding
 import warnings
 from dataclasses import dataclass
 
-@dataclass
-class LBMDragEstimationData:
-    failure_tolerance: float = 0
-    estimation_error: float = 0
-    estimated_drag_force: float = 0
-    evolution_time: float = 0
-    mu_P_A: float = 0
-    kappa_P: float = 0
-    norm_inhomogeneous_term_vector: float = 0
-    norm_x_t: float = 0
-    A_stable: bool = False
-    # Intialize subroutines as generic routines with task name
-    solve_quantum_ode: SubroutineModel =  SubroutineModel("solve_quantum_ode") 
-    mark_drag_vector: SubroutineModel = SubroutineModel("mark_drag_vector")
-
-
 class LBMDragEstimation(SubroutineModel):
     def __init__(
         self,

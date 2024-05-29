@@ -50,3 +50,10 @@ class SphereBoundaryOracleData:
     failure_tolerance: float = None,
     radius: float = None,
     grid_spacing: float = None,
+
+@dataclass
+class GenericLinearSystemBlockEncodingData:
+        failure_tolerance: float = 0.1
+        kappa_P: float = 0.1,
+        mu_P_A: float = 0.1
+        A_stable: float = 0.01 
