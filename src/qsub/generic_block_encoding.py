@@ -2,7 +2,14 @@ import numpy as np
 from typing import Optional
 from .subroutine_model import SubroutineModel
 from sympy import symbols
+from dataclasses import dataclass
 
+@dataclass
+class GenericLinearSystemBlockEncodingData:
+        failure_tolerance: float = 0.1
+        kappa_P: float = 0.1,
+        mu_P_A: float = 0.1
+        A_stable: float = 0.01  
 
 class GenericBlockEncoding(SubroutineModel):
     def __init__(self, task_name: str, requirements: Optional[dict] = None, **kwargs):
@@ -37,29 +44,6 @@ class GenericLinearSystemBlockEncoding(GenericBlockEncoding):
         for attr, value in kwargs.items():
             if isinstance(value, SubroutineModel):
                 setattr(self, attr, value)
-
-    def set_requirements(
-        self,
-        failure_tolerance: Optional[float] = None,
-        kappa_P: Optional[float] = None,
-        mu_P_A: Optional[float] = None,
-        A_stable: Optional[float] = None,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        # Initialize the requirements attribute if it doesn't exist
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-
-        # Update the requirements with new values
-        self.requirements.update(args)
-
-        # Call the parent class's set_requirements method with the updated requirements
-        super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
         pass
