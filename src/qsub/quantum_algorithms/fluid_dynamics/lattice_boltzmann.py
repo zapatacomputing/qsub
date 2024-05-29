@@ -21,6 +21,10 @@ class LBMDragEstimation(SubroutineModel):
         else:
             self.estimate_amplitude = SubroutineModel("estimate_amplitude")
 
+        # Initialize the sub-subtask requirements as generic subroutines with task names
+        self.requirements["solve_quantum_ode"] = SubroutineModel("solve_quantum_ode")
+        self.requirements["mark_drag_vector"] = SubroutineModel("mark_drag_vector")
+
 
     def populate_requirements_for_subroutines(self):
         # Note: This subroutine consumes no failure probability.
@@ -29,7 +33,7 @@ class LBMDragEstimation(SubroutineModel):
 
         solve_quantum_ode = self.requirements["solve_quantum_ode"]
         mark_drag_vector = self.requirements["mark_drag_vector"]
-        
+
         solve_quantum_ode_data = TaylorQuantumODESolverData()
         solve_quantum_ode_data.evolution_time = self.requirements["evolution_time"]
         solve_quantum_ode_data.mu_P_A = self.requirements["mu_P_A"]
@@ -60,7 +64,8 @@ class LBMDragEstimation(SubroutineModel):
             ]
         mark_drag_vector.set_requirements(mark_drag_vector_data)
         print("requirements for mark drag vector: ", mark_drag_vector.requirements)
-        
+
+
         # Set amp est st prep subroutine as ode solver
         self.estimate_amplitude.run_iterative_qae_circuit.state_preparation_oracle = (
             solve_quantum_ode
@@ -71,7 +76,6 @@ class LBMDragEstimation(SubroutineModel):
             mark_drag_vector
         )
         print("What is in mark subspace: ", self.estimate_amplitude.run_iterative_qae_circuit.mark_subspace )
-
         # Set number of calls to the amplitude estimation task to one
         self.estimate_amplitude.number_of_times_called = 1
 
@@ -96,6 +100,7 @@ class LBMDragEstimation(SubroutineModel):
                 * state_prep_subnorm
             )
         )
+
         estimate_amplitude_data = IterativeQuantumAmplitudeEstimationAlgorithmData()
         estimate_amplitude_data.estimation_error = amplitude_estimation_error
         estimate_amplitude_data.failure_tolerance = self.requirements["failure_tolerance"]
@@ -119,6 +124,7 @@ class LBMDragEstimation(SubroutineModel):
             + self.estimate_amplitude.run_iterative_qae_circuit.mark_subspace.count_qubits()
             - number_of_encoding_qubits
         )
+
 
 class LBMDragCoefficientsReflection(SubroutineModel):
     def __init__(
@@ -154,6 +160,7 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
+
         # Allot time discretization budget
         (
             quantum_sqrt_failure_tolerance,
@@ -170,7 +177,6 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
         # TODO: finalize from Bhargav and update description
         self.quantum_adder.number_of_times_called = 2
-
         print("requirements in coefficients data: ", self.requirements)
         # Set quantum_adder requirements
         self.quantum_adder.set_requirements(
@@ -210,6 +216,7 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
         # Set number of calls to the quantum_square: three for squaring x^2, y^2, and z^2
         self.quantum_square.number_of_times_called = 3
+
         number_of_bits_per_spatial_register = (
             compute_number_of_x_register_bits_for_coefficient_reflection(
                 number_of_spatial_grid_points=self.requirements[
@@ -310,6 +317,7 @@ def compute_number_of_x_register_bits_for_coefficient_reflection(
 
     return number_of_bits_for_x_dimension
 
+
 class SphereBoundaryOracle(SubroutineModel):
     def __init__(
         self,
@@ -335,6 +343,7 @@ class SphereBoundaryOracle(SubroutineModel):
             self.quantum_square = quantum_square
         else:
             self.quantum_square = SubroutineModel("quantum_square")
+
 
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
@@ -456,6 +465,7 @@ class LBMQuadraticTermBlockEncoding(GenericLinearSystemBlockEncoding):
         super().__init__(task_name, requirements)
         self.t_gate = SubroutineModel("t_gate")
 
+
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the t_gate subroutine
 
@@ -513,6 +523,7 @@ class LBMCubicTermBlockEncoding(GenericLinearSystemBlockEncoding):
     ):
         super().__init__(task_name, requirements)
         self.t_gate = SubroutineModel("t_gate")
+
 
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the t_gate subroutine
