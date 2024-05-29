@@ -243,7 +243,6 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
         # TODO: finalize from Bhargav and update description
         self.quantum_adder.number_of_times_called = 2
-
         # Set quantum_adder requirements
         self.quantum_adder.set_requirements(
             failure_tolerance=quantum_adder_failure_tolerance,
@@ -256,7 +255,6 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
         # TODO: finalize from Bhargav and update description
         self.quantum_comparator.number_of_times_called = 2
-
         # Set quantum_comparator requirements
         self.quantum_comparator.set_requirements(
             failure_tolerance=quantum_comparator_failure_tolerance,
