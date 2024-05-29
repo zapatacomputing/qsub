@@ -1,5 +1,5 @@
 from qsub.subroutine_model import SubroutineModel
-from qsub.generic_block_encoding import GenericBlockEncoding
+from qsub.generic_block_encoding import GenericLinearSystemBlockEncoding
 from qsub.utils import consume_fraction_of_error_budget
 
 from typing import Optional
@@ -26,59 +26,15 @@ class TaylorQuantumODESolver(SubroutineModel):
     def __init__(
         self,
         task_name="solve_quantum_ode",
-        requirements=None,
         amplify_amplitude: Optional[SubroutineModel] = None,
     ):
-        super().__init__(task_name, requirements)
+        super().__init__(task_name)
 
         if amplify_amplitude is not None:
             self.amplify_amplitude = amplify_amplitude
         else:
             self.amplify_amplitude = SubroutineModel("amplify_amplitude")
 
-        # Initialize the sub-subtask requirements as generic subroutines with task names
-        self.requirements["solve_linear_system"] = SubroutineModel(
-            "solve_linear_system"
-        )
-        self.requirements["ode_matrix_block_encoding"] = GenericBlockEncoding(
-            "ode_matrix_block_encoding"
-        )
-        self.requirements["prepare_inhomogeneous_term_vector"] = SubroutineModel(
-            "prepare_inhomogeneous_term_vector"
-        )
-        self.requirements["prepare_initial_vector"] = SubroutineModel(
-            "prepare_initial_vector"
-        )
-
-    def set_requirements(
-        self,
-        evolution_time: float = None,
-        mu_P_A: float = None,
-        kappa_P: float = None,
-        failure_tolerance: float = None,
-        norm_inhomogeneous_term_vector: float = None,
-        norm_x_t: float = None,
-        A_stable: bool = None,
-        solve_linear_system: SubroutineModel = None,
-        ode_matrix_block_encoding: SubroutineModel = None,
-        prepare_inhomogeneous_term_vector: SubroutineModel = None,
-        prepare_initial_vector: SubroutineModel = None,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        # Initialize the requirements attribute if it doesn't exist
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-
-        # Update the requirements with new values
-        self.requirements.update(args)
-
-        # Call the parent class's set_requirements method with the updated requirements
-        super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
@@ -345,40 +301,17 @@ class ODEHistoryBlockEncoding(SubroutineModel):
         self,
         task_name="block_encode_ode_history_system",
         requirements=None,
-        block_encode_ode_matrix: Optional[GenericBlockEncoding] = None,
+        block_encode_ode_matrix: Optional[GenericLinearSystemBlockEncoding] = None,
     ):
         super().__init__(task_name, requirements)
 
         if block_encode_ode_matrix is not None:
             self.block_encode_ode_matrix = block_encode_ode_matrix
         else:
-            self.block_encode_ode_matrix = GenericBlockEncoding(
+            self.block_encode_ode_matrix = GenericLinearSystemBlockEncoding(
                 "block_encode_ode_matrix"
             )
 
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-        evolution_time: float = None,
-        epsilon_td: float = None,
-        norm_inhomogeneous_term_vector: float = None,
-        norm_x_t: float = None,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        # Initialize the requirements attribute if it doesn't exist
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-
-        # Update the requirements with new values
-        self.requirements.update(args)
-
-        # Call the parent class's set_requirements method with the updated requirements
-        super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
         # Note: This subroutine consumes no failure probability.
@@ -556,25 +489,6 @@ class ODEHistoryBVector(SubroutineModel):
         else:
             self.prepare_initial_vector = SubroutineModel("prepare_initial_vector")
 
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        # Initialize the requirements attribute if it doesn't exist
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-
-        # Update the requirements with new values
-        self.requirements.update(args)
-
-        # Call the parent class's set_requirements method with the updated requirements
-        super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]

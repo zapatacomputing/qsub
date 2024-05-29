@@ -1,5 +1,5 @@
 from qsub.subroutine_model import SubroutineModel
-from qsub.generic_block_encoding import GenericBlockEncoding
+from qsub.generic_block_encoding import GenericLinearSystemBlockEncoding
 from qsub.utils import consume_fraction_of_error_budget
 from dataclasses import dataclass
 from typing import Optional
@@ -7,28 +7,28 @@ import warnings
 from sympy import symbols, Max, ceiling, log, Basic
 
 
-class CarlemanBlockEncoding(GenericBlockEncoding):
+class CarlemanBlockEncoding(GenericLinearSystemBlockEncoding):
     def __init__(
         self,
         task_name="block_encode_carleman_linearization",
         requirements=None,
-        block_encode_linear_term: Optional[GenericBlockEncoding] = None,
-        block_encode_quadratic_term: Optional[GenericBlockEncoding] = None,
-        block_encode_cubic_term: Optional[GenericBlockEncoding] = None,
+        block_encode_linear_term: Optional[GenericLinearSystemBlockEncoding] = None,
+        block_encode_quadratic_term: Optional[GenericLinearSystemBlockEncoding] = None,
+        block_encode_cubic_term: Optional[GenericLinearSystemBlockEncoding] = None,
     ):
         super().__init__(task_name, requirements)
 
         if block_encode_linear_term is not None:
             self.block_encode_linear_term = block_encode_linear_term
         else:
-            self.block_encode_linear_term = GenericBlockEncoding(
+            self.block_encode_linear_term = GenericLinearSystemBlockEncoding(
                 "block_encode_linear_term"
             )
 
         if block_encode_quadratic_term is not None:
             self.block_encode_quadratic_term = block_encode_quadratic_term
         else:
-            self.block_encode_quadratic_term = GenericBlockEncoding(
+            self.block_encode_quadratic_term = GenericLinearSystemBlockEncoding(
                 "block_encode_quadratic_term"
             )
 

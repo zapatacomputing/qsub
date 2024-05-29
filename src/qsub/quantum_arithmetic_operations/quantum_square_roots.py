@@ -11,37 +11,16 @@ class GidneySquareRoot(SubroutineModel):
     def __init__(
         self,
         task_name="quantum_sqrt",
-        requirements=None,
         t_gate: Optional[SubroutineModel] = None,
     ):
 
-        super().__init__(task_name, requirements)
+        super().__init__(task_name)
 
         if t_gate is not None:
             self.t_gate = t_gate
         else:
             self.t_gate = SubroutineModel("t_gate")
 
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-        number_of_bits: float = None,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        # Initialize the requirements attribute if it doesn't exist
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-
-        # Update the requirements with new values
-        self.requirements.update(args)
-
-        # Call the parent class's set_requirements method with the updated requirements
-        super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
 

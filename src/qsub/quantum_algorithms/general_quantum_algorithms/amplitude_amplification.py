@@ -1,19 +1,17 @@
 import numpy as np
 from typing import Optional
 from ...subroutine_model import SubroutineModel
-from data_classes import StatePreparationOracleData, MarkedSubspaceOracleData
+from qsub.data_classes import StatePreparationOracleData, MarkedSubspaceOracleData
 
 
 class ObliviousAmplitudeAmplification(SubroutineModel):
     def __init__(
         self,
-        state_preparation_oracle: SubroutineModel,
-        mark_subspace: SubroutineModel,
+        state_preparation_oracle: Optional[SubroutineModel]=None,
+        mark_subspace: Optional[SubroutineModel]=None,
         task_name="amplify_amplitude",
     ):
         super().__init__(task_name)
-        assert isinstance(state_preparation_oracle,SubroutineModel)
-        assert isinstance(mark_subspace, SubroutineModel)
         self.state_preparation_oracle = state_preparation_oracle
         self.mark_subspace = mark_subspace
      
@@ -40,13 +38,15 @@ class ObliviousAmplitudeAmplification(SubroutineModel):
 
         self.mark_subspace.number_of_times_called = number_of_grover_iterates
         
-        StatePreparationOracleData.failure_tolerance = subroutine_error_budget_allocation[0] \
+        state_preparation_oracle_data = StatePreparationOracleData()
+        marked_subspace_data = MarkedSubspaceOracleData()
+        state_preparation_oracle_data.failure_tolerance = subroutine_error_budget_allocation[0] \
             * remaining_failure_tolerance
-        MarkedSubspaceOracleData.failure_tolerance = subroutine_error_budget_allocation[1] \
+        marked_subspace_data.failure_tolerance = subroutine_error_budget_allocation[1] \
             * remaining_failure_tolerance
         
-        self.state_preparation_oracle.set_requirements(StatePreparationOracleData)
-        self.mark_subspace.set_requirements(MarkedSubspaceOracleData)
+        self.state_preparation_oracle.set_requirements(state_preparation_oracle_data)
+        self.mark_subspace.set_requirements(marked_subspace_data)
 
     def count_qubits(self):
         return self.state_preparation_oracle.count_qubits()

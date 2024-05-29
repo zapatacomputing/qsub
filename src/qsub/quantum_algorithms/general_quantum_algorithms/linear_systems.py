@@ -4,18 +4,17 @@
 import numpy as np
 from qsub.subroutine_model import SubroutineModel
 from typing import Union, Optional
-import math
 from qsub.utils import consume_fraction_of_error_budget
-from qsub.generic_block_encoding import GenericLinearSystemBlockEncoding
-from sympy import Basic, sqrt, log, pi, exp, Float
-from data_classes import LinearSystemBlockEncodingData, StatePreparationOracleData
+from sympy import Basic, sqrt, log
+from qsub.data_classes import LinearSystemBlockEncodingData, StatePreparationOracleData
+from typing import Optional
 
 
 class TaylorQLSA(SubroutineModel):
     def __init__(
         self,
-        linear_system_block_encoding: SubroutineModel,
-        prepare_b_vector: SubroutineModel,
+        linear_system_block_encoding: Optional[SubroutineModel]=None,
+        prepare_b_vector:Optional[SubroutineModel]=None,
         task_name="solve_quantum_linear_system",
     ):
         super().__init__(task_name)
@@ -50,10 +49,12 @@ class TaylorQLSA(SubroutineModel):
         self.prepare_b_vector.number_of_times_called = n_calls_to_b
 
         # Set block encoding requirements
-        LinearSystemBlockEncodingData.failure_tolerance = linear_system_block_encoding_failure_tolerance
-        StatePreparationOracleData.failure_tolerance=prepare_b_vector_failure_tolerance
-        self.linear_system_block_encoding.set_requirements(LinearSystemBlockEncodingData)
-        self.prepare_b_vector.set_requirements(StatePreparationOracleData)
+        linear_system_block_encoding_data = LinearSystemBlockEncodingData()
+        state_preparation_oracle_data = StatePreparationOracleData()
+        linear_system_block_encoding_data.failure_tolerance = linear_system_block_encoding_failure_tolerance
+        state_preparation_oracle_data.failure_tolerance=prepare_b_vector_failure_tolerance
+        self.linear_system_block_encoding.set_requirements(linear_system_block_encoding_data)
+        self.prepare_b_vector.set_requirements(state_preparation_oracle_data)
 
     def count_qubits(self):
         # From Theorem 1 in https://arxiv.org/abs/2305.11352
@@ -121,11 +122,5 @@ def get_taylor_qlsa_num_block_encoding_calls(
         number_of_calls_to_A = Q_star / (0.39 - 0.204 * failure_probability)
         number_of_calls_to_b = 2 * number_of_calls_to_A
 
-    # # Convert to float if inputs are floats
-    # if not isinstance(subnormalization, Basic) and not isinstance(
-    #     condition_number, Float
-    # ):
-    #     number_of_calls_to_A = float(number_of_calls_to_A)
-    #     number_of_calls_to_b = float(number_of_calls_to_b)
 
     return number_of_calls_to_A, number_of_calls_to_b

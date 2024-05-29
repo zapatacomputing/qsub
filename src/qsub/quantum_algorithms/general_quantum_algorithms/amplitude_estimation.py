@@ -3,7 +3,10 @@ from typing import Optional
 from ...subroutine_model import SubroutineModel
 import warnings
 from qsub.utils import consume_fraction_of_error_budget
-from data_classes import StatePreparationOracleData, MarkedSubspaceOracleData
+from qsub.data_classes import (StatePreparationOracleData, 
+    MarkedSubspaceOracleData,
+    IterativeQuantumAmplitudeEstimationCircuitData,
+    )
 
 class QuantumAmplitudeEstimation(SubroutineModel):
     def __init__(
@@ -24,10 +27,6 @@ class QuantumAmplitudeEstimation(SubroutineModel):
         # Populate requirements for state_preparation_oracle and mark_subspace
 
         # Allocate failure tolerance
-        # consumed_failure_tolerance = allocation * self.requirements["failure_tolerance"]
-        # remaining_failure_tolerance = (
-        #     self.requirements["failure_tolerance"] - consumed_failure_tolerance
-        # )
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
 
         (consumed_failure_tolerance, remaining_failure_tolerance) = (
@@ -58,15 +57,16 @@ class QuantumAmplitudeEstimation(SubroutineModel):
             2 * number_of_grover_iterates + 1
         )
         self.mark_subspace.number_of_times_called = 2 * number_of_grover_iterates
-
-        StatePreparationOracleData.failure_tolerance= (subroutine_error_budget_allocation[0]/ 
+        state_preparation_data = StatePreparationOracleData()
+        marked_subspace_oracle_data = MarkedSubspaceOracleData()
+        state_preparation_data.failure_tolerance= (subroutine_error_budget_allocation[0]/ 
             self.state_preparation_oracle.number_of_times_called)* remaining_failure_tolerance
-        MarkedSubspaceOracleData.failure_tolerance = (subroutine_error_budget_allocation[1]
+        marked_subspace_oracle_data.failure_tolerance = (subroutine_error_budget_allocation[1]
             / self.mark_subspace.number_of_times_called) * remaining_failure_tolerance
+        
+        self.state_preparation_oracle.set_requirements(state_preparation_data)
 
-        self.state_preparation_oracle.set_requirements(StatePreparationOracleData)
-
-        self.mark_subspace.set_requirements(MarkedSubspaceOracleData)
+        self.mark_subspace.set_requirements(marked_subspace_oracle_data)
 
     def count_qubits(self):
         return self.state_preparation_oracle.count_qubits()
@@ -83,7 +83,6 @@ def compute_number_of_grover_iterates_for_coherent_quantum_amp_est(
 
     return number_of_grover_iterates
 
-
 class IterativeQuantumAmplitudeEstimationAlgorithm(SubroutineModel):
     """
     Subroutine model for the iterative quantum amplitude estimation algorithm
@@ -96,13 +95,69 @@ class IterativeQuantumAmplitudeEstimationAlgorithm(SubroutineModel):
 
     def __init__(
         self,
-        state_preparation_oracle: SubroutineModel = None,
-        mark_subspace: SubroutineModel = None,
         task_name="estimate_amplitude",
+        run_iterative_qae_circuit: Optional[SubroutineModel] = None,
     ):
         super().__init__(task_name)
-        self.state_preparation_oracle = state_preparation_oracle
-        self.mark_subspace = mark_subspace
+
+        if run_iterative_qae_circuit is not None:
+            self.run_iterative_qae_circuit = run_iterative_qae_circuit
+        else:
+            self.run_iterative_qae_circuit = SubroutineModel(
+                "run_iterative_qae_circuit"
+            )
+
+
+    def populate_requirements_for_subroutines(self):
+        # Populate requirements for state_preparation_oracle and mark_subspace
+
+        # This subroutine consumes no failure tolerance
+        # Compute number of Grover iterates needed
+        number_of_samples = compute_number_of_samples_for_iterative_amp_est(
+            self.requirements["failure_tolerance"],
+            self.requirements["estimation_error"],
+        )
+
+        # Set number of times called to number of Grover iterates
+        self.run_iterative_qae_circuit.number_of_times_called = number_of_samples
+        run_iterative_qae_circuit_data = IterativeQuantumAmplitudeEstimationCircuitData()
+        run_iterative_qae_circuit_data.failure_tolerance = self.requirements["failure_tolerance"]
+        run_iterative_qae_circuit_data.estimation_error = self.requirements["estimation_error"]
+        
+        self.run_iterative_qae_circuit.set_requirements(run_iterative_qae_circuit_data)
+
+    def count_qubits(self):
+        return self.run_iterative_qae_circuit.count_qubits()
+
+
+
+class IterativeQuantumAmplitudeEstimationCircuit(SubroutineModel):
+    """
+    Subroutine model for the iterative quantum amplitude estimation circuit
+    as described in https://arxiv.org/abs/1912.05559.
+    The algorithm is a variant of the quantum amplitude estimation algorithm
+    where there quantum fourier transform is not needed, each circuit is run
+    multiple times, and the number of Grover iterates used per circuit increases
+    in each iteration.
+    """
+
+    def __init__(
+        self,
+        task_name="run_iterative_qae_circuit",
+        state_preparation_oracle: Optional[SubroutineModel] = None,
+        mark_subspace: Optional[SubroutineModel] = None,
+    ):
+        super().__init__(task_name)
+
+        if state_preparation_oracle is not None:
+            self.state_preparation_oracle = state_preparation_oracle
+        else:
+            self.state_preparation_oracle = SubroutineModel("state_preparation_oracle")
+
+        if mark_subspace is not None:
+            self.mark_subspace = mark_subspace
+        else:
+            self.mark_subspace = SubroutineModel("mark_subspace")
 
     def populate_requirements_for_subroutines(self):
         # Populate requirements for state_preparation_oracle and mark_subspace
@@ -130,14 +185,12 @@ class IterativeQuantumAmplitudeEstimationAlgorithm(SubroutineModel):
         )
         self.mark_subspace.number_of_times_called = number_of_grover_iterates
 
-        StatePreparationOracleData.failure_tolerance=(subroutine_error_budget_allocation[0]
-                    / self.state_preparation_oracle.number_of_times_called)* remaining_failure_tolerance
-        MarkedSubspaceOracleData.failure_tolerance = (subroutine_error_budget_allocation[1]
-                    / self.mark_subspace.number_of_times_called)* remaining_failure_tolerance
-
-        self.state_preparation_oracle.set_requirements(StatePreparationOracleData)
-
-        self.mark_subspace.set_requirements(MarkedSubspaceOracleData)
+        state_preparation_data = StatePreparationOracleData()
+        marked_subspace_data = MarkedSubspaceOracleData()
+        state_preparation_data.failure_tolerance = subroutine_error_budget_allocation[0]* remaining_failure_tolerance
+        self.state_preparation_oracle.set_requirements(state_preparation_data)
+        marked_subspace_data.failure_tolerance = subroutine_error_budget_allocation[1] * remaining_failure_tolerance
+        self.mark_subspace.set_requirements(marked_subspace_data)
 
     def count_qubits(self):
         return self.state_preparation_oracle.count_qubits()

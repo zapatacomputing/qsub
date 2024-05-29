@@ -7,6 +7,7 @@ algorithm (arXiv:2209.06811v2)."""
 import numpy as np
 from ..subroutine_model import SubroutineModel
 from typing import Optional
+from qsub.data_classes import ControlledTimeEvoutionData
 
 
 from typing import Optional
@@ -16,30 +17,15 @@ class GF_LD_GSEE(SubroutineModel):
     def __init__(
         self,
         task_name="ground_state_energy_estimation",
-        requirements=None,
         c_time_evolution: Optional[SubroutineModel] = None,
     ):
-        super().__init__(task_name, requirements)
+        super().__init__(task_name)
 
         if c_time_evolution is not None:
             self.c_time_evolution = c_time_evolution
         else:
             self.c_time_evolution = SubroutineModel("c_time_evolution")
 
-    def set_requirements(
-        self,
-        alpha,
-        energy_gap,
-        square_overlap,
-        precision,
-        failure_tolerance,
-        hamiltonian,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {k: v for k, v in args.items() if not k.startswith("__")}
-        super().set_requirements(**args)
 
     def populate_requirements_for_subroutines(self):
         # Allocate failure tolerance
@@ -68,11 +54,12 @@ class GF_LD_GSEE(SubroutineModel):
             self.requirements["square_overlap"],
             self.requirements["precision"],
         )
-        self.c_time_evolution.set_requirements(
-            evolution_time=evolution_time,
-            hamiltonian=self.requirements["hamiltonian"],
-            failure_tolerance=hadamard_failure_tolerance,
-        )
+        controlled_time_evolution_data = ControlledTimeEvoutionData()
+        controlled_time_evolution_data.evolution_time =evolution_time
+        controlled_time_evolution_data.hamiltonian = self.requirements["hamiltonian"]
+        controlled_time_evolution_data.failure_tolerance = hadamard_failure_tolerance
+
+        self.c_time_evolution.set_requirements(controlled_time_evolution_data)
 
 
 def _get_sigma(

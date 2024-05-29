@@ -2,18 +2,19 @@ from typing import Optional
 from qsub.subroutine_model import SubroutineModel
 from qsub.utils import consume_fraction_of_error_budget
 import numpy as np
-from qsub.generic_block_encoding import GenericBlockEncoding
-import warnings
-from dataclasses import dataclass
+from qsub.generic_block_encoding import GenericLinearSystemBlockEncoding
+from qsub.data_classes import (TaylorQuantumODESolverData, 
+    LBMDragCoefficientsReflectionData, 
+    IterativeQuantumAmplitudeEstimationAlgorithmData
+)
 
 class LBMDragEstimation(SubroutineModel):
     def __init__(
         self,
         task_name="estimate_drag_from_lbm",
-        requirements=None,
         estimate_amplitude: Optional[SubroutineModel] = None,
     ):
-        super().__init__(task_name, requirements)
+        super().__init__(task_name)
 
         if estimate_amplitude is not None:
             self.estimate_amplitude = estimate_amplitude
@@ -28,36 +29,38 @@ class LBMDragEstimation(SubroutineModel):
 
         solve_quantum_ode = self.requirements["solve_quantum_ode"]
         mark_drag_vector = self.requirements["mark_drag_vector"]
+        
+        solve_quantum_ode_data = TaylorQuantumODESolverData()
+        solve_quantum_ode_data.evolution_time = self.requirements["evolution_time"]
+        solve_quantum_ode_data.mu_P_A = self.requirements["mu_P_A"]
+        solve_quantum_ode_data.kappa_P = self.requirements["kappa_P"]
+        solve_quantum_ode_data.norm_inhomogeneous_term_vector= self.requirements[
+                "norm_inhomogeneous_term_vector"
+            ]
+        solve_quantum_ode_data.norm_x_t=self.requirements["norm_x_t"]
+        solve_quantum_ode_data.A_stable = self.requirements["A_stable"]
 
         # Set a subset of solve_quantum_ode requirements
-        solve_quantum_ode.set_requirements(
-            evolution_time=self.requirements["evolution_time"],
-            mu_P_A=self.requirements["mu_P_A"],
-            kappa_P=self.requirements["kappa_P"],
-            norm_inhomogeneous_term_vector=self.requirements[
-                "norm_inhomogeneous_term_vector"
-            ],
-            norm_x_t=self.requirements["norm_x_t"],
-            A_stable=self.requirements["A_stable"],
-        )
+        solve_quantum_ode.set_requirements(solve_quantum_ode_data)
 
         # Set a subset of mark_drag_vector requirements
-        mark_drag_vector.set_requirements(
-            number_of_spatial_grid_points=self.requirements[
-                "number_of_spatial_grid_points"
-            ],
-            number_of_velocity_grid_points=self.requirements[
+        mark_drag_vector_data = LBMDragCoefficientsReflectionData()
+        mark_drag_vector_data.number_of_velocity_grid_points=self.requirements[
                 "number_of_velocity_grid_points"
-            ],
-            x_length_in_meters=self.requirements["x_length_in_meters"],
-            y_length_in_meters=self.requirements["y_length_in_meters"],
-            z_length_in_meters=self.requirements["z_length_in_meters"],
-            sphere_radius_in_meters=self.requirements["sphere_radius_in_meters"],
-            time_discretization_in_seconds=self.requirements[
+            ]
+        mark_drag_vector_data.number_of_spatial_grid_points =self.requirements[
+                "number_of_spatial_grid_points"
+            ]
+        mark_drag_vector_data.x_length_in_meters = self.requirements["x_length_in_meters"]
+        mark_drag_vector_data.y_length_in_meters = self.requirements["y_length_in_meters"]
+        mark_drag_vector_data.z_length_in_meters = self.requirements["z_length_in_meters"]
+        mark_drag_vector_data.sphere_radius_in_meters = self.requirements["sphere_radius_in_meters"]
+        mark_drag_vector_data.time_discretization_in_seconds = self.requirements[
                 "time_discretization_in_seconds"
-            ],
-        )
-
+            ]
+        mark_drag_vector.set_requirements(mark_drag_vector_data)
+        print("requirements for mark drag vector: ", mark_drag_vector.requirements)
+        
         # Set amp est st prep subroutine as ode solver
         self.estimate_amplitude.run_iterative_qae_circuit.state_preparation_oracle = (
             solve_quantum_ode
@@ -67,6 +70,7 @@ class LBMDragEstimation(SubroutineModel):
         self.estimate_amplitude.run_iterative_qae_circuit.mark_subspace = (
             mark_drag_vector
         )
+        print("What is in mark subspace: ", self.estimate_amplitude.run_iterative_qae_circuit.mark_subspace )
 
         # Set number of calls to the amplitude estimation task to one
         self.estimate_amplitude.number_of_times_called = 1
@@ -92,12 +96,11 @@ class LBMDragEstimation(SubroutineModel):
                 * state_prep_subnorm
             )
         )
-
+        estimate_amplitude_data = IterativeQuantumAmplitudeEstimationAlgorithmData()
+        estimate_amplitude_data.estimation_error = amplitude_estimation_error
+        estimate_amplitude_data.failure_tolerance = self.requirements["failure_tolerance"]
         # Set amp est requirements
-        self.estimate_amplitude.set_requirements(
-            estimation_error=amplitude_estimation_error,
-            failure_tolerance=self.requirements["failure_tolerance"],
-        )
+        self.estimate_amplitude.set_requirements(estimate_amplitude_data)
 
     def count_qubits(self):
         number_of_spatial_grid_points = self.requirements[
@@ -117,17 +120,16 @@ class LBMDragEstimation(SubroutineModel):
             - number_of_encoding_qubits
         )
 
-class LBMDragReflection(SubroutineModel):
+class LBMDragCoefficientsReflection(SubroutineModel):
     def __init__(
         self,
         task_name="mark_drag_vector",
-        requirements=None,
         quantum_adder: Optional[SubroutineModel] = None,
         quantum_comparator: Optional[SubroutineModel] = None,
         quantum_square: Optional[SubroutineModel] = None,
         quantum_sqrt: Optional[SubroutineModel] = None,
     ):
-        super().__init__(task_name, requirements)
+        super().__init__(task_name)
 
         if quantum_adder is not None:
             self.quantum_adder = quantum_adder
@@ -152,7 +154,6 @@ class LBMDragReflection(SubroutineModel):
 
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
-
         # Allot time discretization budget
         (
             quantum_sqrt_failure_tolerance,
@@ -170,6 +171,7 @@ class LBMDragReflection(SubroutineModel):
         # TODO: finalize from Bhargav and update description
         self.quantum_adder.number_of_times_called = 2
 
+        print("requirements in coefficients data: ", self.requirements)
         # Set quantum_adder requirements
         self.quantum_adder.set_requirements(
             failure_tolerance=quantum_adder_failure_tolerance,
@@ -208,7 +210,6 @@ class LBMDragReflection(SubroutineModel):
 
         # Set number of calls to the quantum_square: three for squaring x^2, y^2, and z^2
         self.quantum_square.number_of_times_called = 3
-
         number_of_bits_per_spatial_register = (
             compute_number_of_x_register_bits_for_coefficient_reflection(
                 number_of_spatial_grid_points=self.requirements[
@@ -226,6 +227,7 @@ class LBMDragReflection(SubroutineModel):
 
     def get_subnormalization(self):
         # Returns the normalization factor for the vector encoding the marked state
+        print("mark state requirements: ", self.requirements)
         number_of_spatial_grid_points = self.requirements[
             "number_of_spatial_grid_points"
         ]
@@ -372,7 +374,7 @@ class SphereBoundaryOracle(SubroutineModel):
         )
 
 
-class LBMLinearTermBlockEncoding(GenericBlockEncoding):
+class LBMLinearTermBlockEncoding(GenericLinearSystemBlockEncoding):
     def __init__(
         self,
         task_name="block_encode_linear_term",
@@ -445,7 +447,7 @@ class LBMLinearTermBlockEncoding(GenericBlockEncoding):
        
 
 
-class LBMQuadraticTermBlockEncoding(GenericBlockEncoding):
+class LBMQuadraticTermBlockEncoding(GenericLinearSystemBlockEncoding):
     def __init__(
         self,
         task_name="block_encode_quadratic_term",
@@ -503,7 +505,7 @@ class LBMQuadraticTermBlockEncoding(GenericBlockEncoding):
         number_of_qubits = np.ceil(np.log2(number_of_velocity_grid_points)) + 3
         return number_of_qubits
 
-class LBMCubicTermBlockEncoding(GenericBlockEncoding):
+class LBMCubicTermBlockEncoding(GenericLinearSystemBlockEncoding):
     def __init__(
         self,
         task_name="block_encode_cubic_term",

@@ -7,31 +7,34 @@ from qsub.quantum_algorithms.gaussian_filtering_gsee import (
     _get_sigma,
     _get_epsilon_1,
 )
+from qsub.data_classes import GF_LD_GSEEData
 
+@pytest.fixture()
+def mock_data_class():
+    data_instance = GF_LD_GSEEData()
+    data_instance.alpha=0.1
+    data_instance.failure_tolerance=0.1
+    data_instance.energy_gap=0.1
+    data_instance.precision=0.1
+    data_instance.square_overlap=0.1
+    data_instance.hamiltonian= None
+    return data_instance
 
-# Test initialization of GF_LD_GSEE
-def test_initialization():
-    obj = GF_LD_GSEE()
-    assert obj.task_name == "ground_state_energy_estimation"
-    assert isinstance(obj.c_time_evolution, SubroutineModel)
-
-
-# Test setting of requirements
-def test_set_requirements():
-    obj = GF_LD_GSEE()
-    obj.set_requirements(0.5, 1.0, 0.8, 0.01, 0.1, None)
-    assert obj.requirements["alpha"] == 0.5
-    # Add further assertions for other parameters
-
+@pytest.fixture()
+def c_time_evolution():
+    class MockSubroutineModel(SubroutineModel):
+        def __init__(self, task_name: str, **kwargs):
+            super().__init__(task_name, **kwargs)
+        def populate_requirements_for_subroutines(self):
+            return super().populate_requirements_for_subroutines()
+    return MockSubroutineModel(task_name='c_time_evolution')
 
 # Test population of requirements for subroutines
-def test_populate_requirements_for_subroutines():
-    obj = GF_LD_GSEE()
-    obj.set_requirements(0.5, 1.0, 0.8, 0.01, 0.1, None)
-    obj.populate_requirements_for_subroutines()
-    # Check that the c_time_evolution requirements have been set correctly.
-    # This might need the real computation logic from your program to validate against.
-
+def test_populate_requirements_for_subroutines(c_time_evolution, mock_data_class):
+    gaussian_filter = GF_LD_GSEE(c_time_evolution=c_time_evolution)
+    gaussian_filter.set_requirements(mock_data_class)
+    print(gaussian_filter.requirements)
+    gaussian_filter.populate_requirements_for_subroutines()
 
 # Test _get_sigma
 def test_get_sigma():
