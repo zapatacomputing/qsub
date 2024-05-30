@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from qsub.subroutine_model import SubroutineModel
 from typing import Any
 from qsub.generic_block_encoding import GenericLinearSystemBlockEncoding
+@dataclass
 class ObliviousAmplitudeAmplificationData:
       input_state_squared_overlap:float = 0.5
       failure_tolerance: float = 0.001
@@ -60,7 +61,7 @@ class CarlemanBlockEncodingData:
 
 @dataclass
 class LBMDragEstimationData:
-    failure_tolerance: float = 0.1
+    failure_tolerance: float = None
     relative_estimation_error: float = 0.1
     estimation_error: float = 0.1
     estimated_drag_force: float = 0.1
@@ -84,7 +85,7 @@ class LBMDragEstimationData:
 
 @dataclass
 class LBMDragCoefficientsReflectionData:
-    failure_tolerance: float = 0.1
+    failure_tolerance: float = None
     number_of_spatial_grid_points: float = 0.1
     number_of_velocity_grid_points: float = 0.1
     x_length_in_meters: float = 0.1
@@ -162,20 +163,25 @@ class ODEHistoryBVectorData:
     failure_tolerance: float =0.1
 
 @dataclass
+class ODEFinalTimePrepData:
+    failure_tolerance: float = 0.1
+    state_preparation_probability: float = 0.1
+
+@dataclass
 class GidneyAdderData:
     failure_tolerance: float = None
     number_of_bits: float = None
 @dataclass
-class GidneyComparator:
+class GidneyComparatorData:
     failure_tolerance: float = None
     number_of_bits: float = None
 
 @dataclass
-class GidneyMultiplier:
+class GidneyMultiplierData:
     failure_tolerance: float = None,
     number_of_bits_total: float = None
     number_of_bits_above_decimal_place: float = None
 @dataclass
-class GidneySqaureRoot:
+class GidneySqaureRootData:
     failure_tolerance: float = None
     number_of_bits: float = None

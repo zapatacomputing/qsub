@@ -190,6 +190,7 @@ class IterativeQuantumAmplitudeEstimationCircuit(SubroutineModel):
         state_preparation_data.failure_tolerance = subroutine_error_budget_allocation[0]* remaining_failure_tolerance
         self.state_preparation_oracle.set_requirements(state_preparation_data)
         marked_subspace_data.failure_tolerance = subroutine_error_budget_allocation[1] * remaining_failure_tolerance
+        print("marked subspace in amplitude estimation: ", self.mark_subspace.requirements)
         self.mark_subspace.set_requirements(marked_subspace_data)
 
     def count_qubits(self):

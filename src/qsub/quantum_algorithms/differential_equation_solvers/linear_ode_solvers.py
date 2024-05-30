@@ -1,10 +1,14 @@
 from qsub.subroutine_model import SubroutineModel
 from qsub.generic_block_encoding import GenericLinearSystemBlockEncoding
 from qsub.utils import consume_fraction_of_error_budget
-
 from typing import Optional
 import math
 import warnings
+from qsub.data_classes import (ObliviousAmplitudeAmplificationData,
+StatePreparationOracleData, 
+ODEFinalTimePrepData,
+ODEHistoryBlockEncodingData
+)
 
 
 class TaylorQuantumODESolver(SubroutineModel):
@@ -62,18 +66,18 @@ class TaylorQuantumODESolver(SubroutineModel):
         self.amplify_amplitude.number_of_times_called = 1
 
         # Set amp amp requirements
-        self.amplify_amplitude.set_requirements(
-            failure_tolerance=remaining_failure_tolerance,
-            input_state_squared_overlap=state_preparation_probability,
-        )
+        amplify_amplitude_data = ObliviousAmplitudeAmplificationData()
+        amplify_amplitude_data.failure_tolerance = remaining_failure_tolerance
+        amplify_amplitude_data.input_state_squared_overlap = state_preparation_probability
+        self.amplify_amplitude.set_requirements(amplify_amplitude_data)
 
         # Set amp_amp st prep subroutine as final_state_prep
         self.amplify_amplitude.state_preparation_oracle = ODEFinalTimePrep()
 
         # Set final_state_prep probability requirement
-        self.amplify_amplitude.state_preparation_oracle.set_requirements(
-            state_preparation_probability=state_preparation_probability
-        )
+        state_preparation_oracle_data = ODEFinalTimePrepData()
+        state_preparation_oracle_data.state_preparation_probability= state_preparation_probability
+        self.amplify_amplitude.state_preparation_oracle.set_requirements(state_preparation_oracle_data)
         # Set final_state_prep subroutine as qlsa
         self.amplify_amplitude.state_preparation_oracle.prepare_ode_history_state = (
             self.requirements["solve_linear_system"]
@@ -93,14 +97,24 @@ class TaylorQuantumODESolver(SubroutineModel):
         )
 
         # Pass problem instance requirements to ODEHistoryBlockEncoding
-        self.amplify_amplitude.state_preparation_oracle.prepare_ode_history_state.linear_system_block_encoding.set_requirements(
-            evolution_time=self.requirements["evolution_time"],
-            epsilon_td=epsilon_td,
-            norm_inhomogeneous_term_vector=self.requirements[
+        ode_history_block_encoding_data = ODEHistoryBlockEncodingData()
+        ode_history_block_encoding_data.evolution_time =self.requirements["evolution_time"]
+        ode_history_block_encoding_data.epsilon_td = epsilon_td
+        ode_history_block_encoding_data.norm_inhomogeneous_term_vector=self.requirements[
                 "norm_inhomogeneous_term_vector"
-            ],
-            norm_x_t=self.requirements["norm_x_t"],
+            ]
+        ode_history_block_encoding_data.norm_x_t = self.requirements["norm_x_t"]
+        self.amplify_amplitude.state_preparation_oracle.prepare_ode_history_state.linear_system_block_encoding.set_requirements(
+            ode_history_block_encoding_data
         )
+        # self.amplify_amplitude.state_preparation_oracle.prepare_ode_history_state.linear_system_block_encoding.set_requirements(
+        #     evolution_time=self.requirements["evolution_time"],
+        #     epsilon_td=epsilon_td,
+        #     norm_inhomogeneous_term_vector=self.requirements[
+        #         "norm_inhomogeneous_term_vector"
+        #     ],
+        #     norm_x_t=self.requirements["norm_x_t"],
+        # )
 
         # Set a subset of requirements for qlsa
         # TODO: have this come from the populate requirements of the solve_linear_system subroutine
@@ -227,10 +241,9 @@ class ODEFinalTimePrep(SubroutineModel):
     def __init__(
         self,
         task_name="prepare_ode_final_time_state",
-        requirements=None,
         prepare_ode_history_state: Optional[SubroutineModel] = None,
     ):
-        super().__init__(task_name, requirements)
+        super().__init__(task_name)
 
         if prepare_ode_history_state is not None:
             self.prepare_ode_history_state = prepare_ode_history_state
@@ -238,27 +251,6 @@ class ODEFinalTimePrep(SubroutineModel):
             self.prepare_ode_history_state = SubroutineModel(
                 "prepare_ode_history_state"
             )
-
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-        state_preparation_probability: float = None,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        # Initialize the requirements attribute if it doesn't exist
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-
-        # Update the requirements with new values
-        self.requirements.update(args)
-
-        # Call the parent class's set_requirements method with the updated requirements
-        super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
         # Note: This subroutine consumes no failure probability.
@@ -303,7 +295,7 @@ class ODEHistoryBlockEncoding(SubroutineModel):
         requirements=None,
         block_encode_ode_matrix: Optional[GenericLinearSystemBlockEncoding] = None,
     ):
-        super().__init__(task_name, requirements)
+        super().__init__(task_name)
 
         if block_encode_ode_matrix is not None:
             self.block_encode_ode_matrix = block_encode_ode_matrix
@@ -471,11 +463,10 @@ class ODEHistoryBVector(SubroutineModel):
     def __init__(
         self,
         task_name="prepare_ode_history_b_vector",
-        requirements=None,
         prepare_inhomogeneous_term_vector: Optional[SubroutineModel] = None,
         prepare_initial_vector: Optional[SubroutineModel] = None,
     ):
-        super().__init__(task_name, requirements)
+        super().__init__(task_name)
 
         if prepare_inhomogeneous_term_vector is not None:
             self.prepare_inhomogeneous_term_vector = prepare_inhomogeneous_term_vector

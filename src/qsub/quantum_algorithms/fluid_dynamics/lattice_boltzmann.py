@@ -5,7 +5,11 @@ import numpy as np
 from qsub.generic_block_encoding import GenericLinearSystemBlockEncoding
 from qsub.data_classes import (TaylorQuantumODESolverData, 
     LBMDragCoefficientsReflectionData, 
-    IterativeQuantumAmplitudeEstimationAlgorithmData
+    IterativeQuantumAmplitudeEstimationAlgorithmData, 
+    GidneyAdderData,
+    GidneyComparatorData,
+    GidneySqaureRootData,
+    GidneyMultiplierData
 )
 
 class LBMDragEstimation(SubroutineModel):
@@ -63,7 +67,6 @@ class LBMDragEstimation(SubroutineModel):
                 "time_discretization_in_seconds"
             ]
         mark_drag_vector.set_requirements(mark_drag_vector_data)
-        print("requirements for mark drag vector: ", mark_drag_vector.requirements)
         # Set amp est st prep subroutine as ode solver
         self.estimate_amplitude.run_iterative_qae_circuit.state_preparation_oracle = (
             solve_quantum_ode
@@ -73,7 +76,6 @@ class LBMDragEstimation(SubroutineModel):
         self.estimate_amplitude.run_iterative_qae_circuit.mark_subspace = (
             mark_drag_vector
         )
-        print("What is in mark subspace: ", self.estimate_amplitude.run_iterative_qae_circuit.mark_subspace )
         # Set number of calls to the amplitude estimation task to one
         self.estimate_amplitude.number_of_times_called = 1
 
@@ -157,7 +159,6 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
-        print("requirements in coefficients data: ", self.requirements)
 
         # Allot time discretization budget
         (
@@ -177,43 +178,41 @@ class LBMDragCoefficientsReflection(SubroutineModel):
         self.quantum_adder.number_of_times_called = 2
   
         # Set quantum_adder requirements
-        self.quantum_adder.set_requirements(
-            failure_tolerance=quantum_adder_failure_tolerance,
-            number_of_bits=compute_number_of_x_register_bits_for_coefficient_reflection(
+        quantum_adder_data = GidneyAdderData()
+        quantum_adder_data.failure_tolerance = quantum_adder_failure_tolerance
+        quantum_adder_data.number_of_bits = compute_number_of_x_register_bits_for_coefficient_reflection(
                 number_of_spatial_grid_points=self.requirements[
                     "number_of_spatial_grid_points"
                 ],
-            ),
-        )
+            )
+        self.quantum_adder.set_requirements(quantum_adder_data)
 
         # TODO: finalize from Bhargav and update description
         self.quantum_comparator.number_of_times_called = 2
 
         # Set quantum_comparator requirements
-        self.quantum_comparator.set_requirements(
-            failure_tolerance=quantum_comparator_failure_tolerance,
-            number_of_bits=compute_number_of_x_register_bits_for_coefficient_reflection(
+        quantum_comparator_data = GidneyComparatorData()
+        quantum_comparator_data.failure_tolerance = quantum_comparator_failure_tolerance
+        quantum_comparator_data.number_of_bits = compute_number_of_x_register_bits_for_coefficient_reflection(
                 number_of_spatial_grid_points=self.requirements[
                     "number_of_spatial_grid_points"
                 ],
-            ),
-        )
+            )
+        self.quantum_comparator.set_requirements(quantum_comparator_data)
+
 
         # Set number of calls to the quantum_sqrt
-        self.quantum_sqrt.number_of_times_called = 1
-
-        # Set quantum_sqrt requirements
-        self.quantum_sqrt.set_requirements(
-            failure_tolerance=quantum_sqrt_failure_tolerance,
-            number_of_bits=compute_number_of_x_register_bits_for_coefficient_reflection(
+        quantum_sqrt_data = GidneySqaureRootData()
+        quantum_sqrt_data.failure_tolerance = quantum_sqrt_failure_tolerance
+        quantum_sqrt_data.number_of_bits = compute_number_of_x_register_bits_for_coefficient_reflection(
                 number_of_spatial_grid_points=self.requirements[
                     "number_of_spatial_grid_points"
                 ],
-            ),
-        )
-
+            )
+        self.quantum_sqrt.set_requirements(quantum_sqrt_data)
+        self.quantum_sqrt.number_of_times_called = 1
+  
         # Set number of calls to the quantum_square: three for squaring x^2, y^2, and z^2
-        self.quantum_square.number_of_times_called = 3
 
         number_of_bits_per_spatial_register = (
             compute_number_of_x_register_bits_for_coefficient_reflection(
@@ -222,17 +221,16 @@ class LBMDragCoefficientsReflection(SubroutineModel):
                 ],
             )
         )
+        quantum_square_data = GidneyMultiplierData()
+        quantum_square_data.failure_tolerance = quantum_square_failure_tolerance
+        quantum_square_data.number_of_bits_above_decimal_place = 2 * number_of_bits_per_spatial_register
+        quantum_square_data.number_of_bits_total = 2 * number_of_bits_per_spatial_register
+        self.quantum_square.number_of_times_called = 3
+        self.quantum_square.set_requirements(quantum_square_data)
 
-        # Set quantum_square requirements
-        self.quantum_square.set_requirements(
-            failure_tolerance=quantum_square_failure_tolerance,
-            number_of_bits_total=2 * number_of_bits_per_spatial_register,
-            number_of_bits_above_decimal_place=2 * number_of_bits_per_spatial_register,
-        )
 
     def get_subnormalization(self):
         # Returns the normalization factor for the vector encoding the marked state
-        print("mark state requirements: ", self.requirements)
         number_of_spatial_grid_points = self.requirements[
             "number_of_spatial_grid_points"
         ]
@@ -257,7 +255,6 @@ class LBMDragCoefficientsReflection(SubroutineModel):
                 * number_of_spatial_grid_points ** (2 / 3)
             )
         )
-        print("mark state requirements after calc subnormalization: ", self.requirements)
         return subnormalization
 
     def count_qubits(self):
@@ -403,7 +400,6 @@ class LBMLinearTermBlockEncoding(GenericLinearSystemBlockEncoding):
         + 72*(n_spatial_qubits-1)
 
         self.t_gate.number_of_times_called = n_f1_tgates + n_streaming_tgates
-        print("f1 count is:", self.t_gate.number_of_times_called)
 
         # Set t_gate requirements
         self.t_gate.set_requirements(

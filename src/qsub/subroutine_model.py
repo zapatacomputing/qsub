@@ -1,10 +1,9 @@
 from typing import Optional, Union
 from graphviz import Digraph
-
 from anytree import Node, RenderTree
 import plotly.graph_objects as go
 from sympy import symbols
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass, asdict, is_dataclass
 
 
@@ -20,7 +19,10 @@ class SubroutineModel(ABC):
        
     def set_requirements(self,requirements:dataclass):
         assert is_dataclass(requirements)
-        self.requirements = asdict(requirements)
+        new_requirements = asdict(requirements)
+        if not hasattr(self, "requirements"):
+            self.requirements = {}
+        self.requirements.update(new_requirements)
         assert "failure_tolerance"  in self.requirements
 
     def populate_requirements_for_subroutines(self):
@@ -44,7 +46,6 @@ class SubroutineModel(ABC):
         self.populate_requirements_for_subroutines()
         for attr in dir(self):
             child = getattr(self, attr)
-            print("child: ", child)
             if isinstance(child, SubroutineModel):
                 child.run_profile(verbose=verbose)
                 if verbose:

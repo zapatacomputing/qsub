@@ -35,7 +35,6 @@ class ObliviousAmplitudeAmplification(SubroutineModel):
 
         # Set number of times called to number of Grover iterates
         self.state_preparation_oracle.number_of_times_called = number_of_grover_iterates
-
         self.mark_subspace.number_of_times_called = number_of_grover_iterates
         
         state_preparation_oracle_data = StatePreparationOracleData()
