@@ -64,8 +64,6 @@ class LBMDragEstimation(SubroutineModel):
             ]
         mark_drag_vector.set_requirements(mark_drag_vector_data)
         print("requirements for mark drag vector: ", mark_drag_vector.requirements)
-
-
         # Set amp est st prep subroutine as ode solver
         self.estimate_amplitude.run_iterative_qae_circuit.state_preparation_oracle = (
             solve_quantum_ode
@@ -156,7 +154,6 @@ class LBMDragCoefficientsReflection(SubroutineModel):
             self.quantum_sqrt = quantum_sqrt
         else:
             self.quantum_sqrt = SubroutineModel("quantum_sqrt")
-
 
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
