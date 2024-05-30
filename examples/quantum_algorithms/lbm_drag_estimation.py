@@ -33,19 +33,22 @@ from qsub.quantum_arithmetic_operations.quantum_adders import GidneyAdder
 from qsub.quantum_arithmetic_operations.quantum_square_roots import GidneySquareRoot
 from qsub.quantum_arithmetic_operations.quantum_multipliers import GidneyMultiplier
 import matplotlib.pyplot as plt
+from qsub.utils import calculate_max_of_solution_norm
 
 def generate_graphs(
     evolution_time=0.0001,
     failure_tolerance=1e-1,
     kappa_P=1,
     relative_estimation_error=0.1,
-    n_grids =  4.096e10
+    n_grids =  4.096e10,
+    uniform_density_deviation = 0.001,
+    fluid_nodes= 5.116*10**3
 ):
 
     mu_P_A = -0.00001
     norm_inhomogeneous_term_vector = 0.0  # ODE is homogeneous
-
-    norm_x_t = 6.86 *10**(6) 
+    uniform_density_deviation = 0.001
+    norm_x_t = 6.86*10**6
     A_stable = False
     number_of_spatial_grid_points = n_grids
     number_of_velocity_grid_points = 27
@@ -179,6 +182,7 @@ def generate_graphs(
 # failure_tolerance_values = [0.0001,0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
 failure_tolerance_values = [0.0001]
 grid_points = [5120.00, 5120000.00, 40960000000.00]
+fluid_nodes = [5.116*10**3,5.116*10*6, 4.093*10**10]
 evolution_times = [43.33 , 240.72 , 7703.04]
 
 

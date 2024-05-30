@@ -43,6 +43,7 @@ class LBMDragEstimation(SubroutineModel):
         sphere_radius_in_meters: float = None,
         time_discretization_in_seconds: float = None,
         mark_drag_vector: Optional[SubroutineModel] = None,
+        deviation_from_uniformity: float = 0.001
     ):
         args = locals()
         # Clean up the args dictionary before setting requirements
@@ -117,19 +118,12 @@ class LBMDragEstimation(SubroutineModel):
 
         # Set number of calls to the amplitude estimation task to one
         self.estimate_amplitude.number_of_times_called = 1
-
-        # The QAE amplitude is the square of the estimate of interest
-        # and is scaled by known normalization factors in the vectors that encode the
-        # initial state and the mark state. One consequence of the square relationship
-        # is that the amplitude estimation error is now dependent on the quantity that
-        # is to be estimated. This is because smaller amplitudes mean that the square root
-        # operation increasingly expands the relative error.
-        # TODO: once manuscript is finalized add equation reference from paper on drag estimation
-
+      
         # Convert relative error to absolute error for amplitude estimation
-        # TODO: update state prep subnorm
+
         # state_prep_subnorm = self.estimate_amplitude.run_iterative_qae_circuit.state_preparation_oracle.get_subnormalization()
-        state_prep_subnorm = np.sqrt(self.requirements["number_of_spatial_grid_points"])
+        state_prep_subnorm = np.sqrt(self.requirements["number_of_spatial_grid_points"])*(1 + 
+            self.requirements["deviation_from_uniformity"]) # This is an upperbound
         amplitude_estimation_error = (
             self.requirements["estimated_drag_force"]
             * self.requirements["relative_estimation_error"]

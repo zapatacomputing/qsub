@@ -146,20 +146,12 @@ class TaylorQuantumODESolver(SubroutineModel):
             norm_x_t=self.requirements["norm_x_t"],
         )
 
-        # Set a subset of requirements for qlsa
-        # TODO: have this come from the populate requirements of the solve_linear_system subroutine
-        # self.amplify_amplitude.state_preparation_oracle.prepare_ode_history_state.set_requirements(
-        #     condition_number=kappa_L
-        # )
-
     def count_qubits(self):
         return self.amplify_amplitude.count_qubits()
 
     def get_subnormalization(self):
-        # Returns the normalization factor for the vector encoding the marked state
-        warnings.warn("This function is not fully implemented.", UserWarning)
-        breakpoint()
-        return 42
+        # Returns the normalization factor for the vector encoding the solution state
+        NotImplementedError("THIS QUANTITY SHOULD BE COMPUTED FROM AN AMPLITUDE ESTIMATION !!")
 
 
 def get_state_preparation_overlap_of_ode_history_state(
