@@ -226,6 +226,7 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
+        print("requirement right before populate requirements: ", self.requirements)
 
         # Allot time discretization budget
         (
@@ -256,6 +257,7 @@ class LBMDragCoefficientsReflection(SubroutineModel):
         # TODO: finalize from Bhargav and update description
         self.quantum_comparator.number_of_times_called = 2
         # Set quantum_comparator requirements
+        print(" in reflections requirements:  ", self.requirements)
         self.quantum_comparator.set_requirements(
             failure_tolerance=quantum_comparator_failure_tolerance,
             number_of_bits=compute_number_of_x_register_bits_for_coefficient_reflection(
@@ -298,6 +300,7 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
     def get_subnormalization(self):
         # Returns the normalization factor for the vector encoding the marked state
+        print(" in get subnormalization : ", self.requirements)
         number_of_spatial_grid_points = self.requirements[
             "number_of_spatial_grid_points"
         ]

@@ -176,7 +176,8 @@ def generate_graphs(
     # print("counts: ", counts)
     return counts["t_gate"], n_qubits
 
-failure_tolerance_values = [0.0001,0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
+# failure_tolerance_values = [0.0001,0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
+failure_tolerance_values = [0.0001]
 grid_points = [5120.00, 5120000.00, 40960000000.00]
 evolution_times = [43.33 , 240.72 , 7703.04]
 
