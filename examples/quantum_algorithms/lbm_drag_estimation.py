@@ -153,7 +153,7 @@ def generate_graphs(
     )
 
     # Run the solver and get the query count
-    drag_est.run_profile(verbose=False)
+    drag_est.run_profile(verbose=True)
     # drag_est.print_profile()
     # drag_est.print_qubit_usage()
 
