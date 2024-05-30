@@ -123,7 +123,7 @@ def generate_graphs(
     amplitude_estimation_alg = IterativeQuantumAmplitudeEstimationAlgorithm(
         run_iterative_qae_circuit=amp_est_circuit
     )
-
+    drag_est = LBMDragEstimation(estimate_amplitude=amplitude_estimation_alg)
     drag_est_data = LBMDragEstimationData()
     drag_est_data.evolution_time = evolution_time
     drag_est_data.relative_estimation_error = relative_estimation_error
@@ -144,7 +144,6 @@ def generate_graphs(
     drag_est_data.time_discretization_in_seconds = time_discretization_in_seconds
     drag_est_data.mark_drag_vector = mark_drag_vector
 
-    drag_est = LBMDragEstimation(estimate_amplitude=amplitude_estimation_alg)
     drag_est.set_requirements(drag_est_data)
 
     # Run the solver and get the query count
