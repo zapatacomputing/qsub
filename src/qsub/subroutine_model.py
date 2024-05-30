@@ -63,7 +63,6 @@ class SubroutineModel:
             requirements_str.strip()
         ):  # only print "Requirements:" if there are requirements
             print("  " * (level + 1) + "Requirements:")
-            print(requirements_str)
         if self.number_of_times_called is not None:
             print("  " * (level + 1) + f"Count: {self.number_of_times_called}")
         # Recurse for child subroutines

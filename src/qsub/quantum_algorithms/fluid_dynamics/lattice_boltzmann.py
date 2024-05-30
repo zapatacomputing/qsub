@@ -249,7 +249,6 @@ class LBMDragCoefficientsReflection(SubroutineModel):
         # TODO: finalize from Bhargav and update description
         self.quantum_comparator.number_of_times_called = 2
         # Set quantum_comparator requirements
-        print(" in reflections requirements:  ", self.requirements)
         self.quantum_comparator.set_requirements(
             failure_tolerance=quantum_comparator_failure_tolerance,
             number_of_bits=compute_number_of_x_register_bits_for_coefficient_reflection(
@@ -497,7 +496,6 @@ class LBMLinearTermBlockEncoding(GenericBlockEncoding):
         + 72*(n_spatial_qubits-1)
 
         self.t_gate.number_of_times_called = n_f1_tgates + n_streaming_tgates
-        print("f1 count is:", self.t_gate.number_of_times_called)
 
         # Set t_gate requirements
         self.t_gate.set_requirements(
