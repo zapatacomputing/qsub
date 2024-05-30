@@ -157,6 +157,7 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
+        print("requirements in coefficients data: ", self.requirements)
 
         # Allot time discretization budget
         (
@@ -174,7 +175,7 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
         # TODO: finalize from Bhargav and update description
         self.quantum_adder.number_of_times_called = 2
-        print("requirements in coefficients data: ", self.requirements)
+  
         # Set quantum_adder requirements
         self.quantum_adder.set_requirements(
             failure_tolerance=quantum_adder_failure_tolerance,
@@ -256,7 +257,7 @@ class LBMDragCoefficientsReflection(SubroutineModel):
                 * number_of_spatial_grid_points ** (2 / 3)
             )
         )
-
+        print("mark state requirements after calc subnormalization: ", self.requirements)
         return subnormalization
 
     def count_qubits(self):
