@@ -44,7 +44,6 @@ class SubroutineModel:
         self.populate_requirements_for_subroutines()
         for attr in dir(self):
             child = getattr(self, attr)
-            print("child: ", child)
             if isinstance(child, SubroutineModel):
                 child.run_profile(verbose=verbose)
                 if verbose:

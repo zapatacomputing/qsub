@@ -158,6 +158,7 @@ class TaylorQuantumODESolver(SubroutineModel):
     def get_subnormalization(self):
         # Returns the normalization factor for the vector encoding the marked state
         warnings.warn("This function is not fully implemented.", UserWarning)
+        breakpoint()
         return 42
 
 

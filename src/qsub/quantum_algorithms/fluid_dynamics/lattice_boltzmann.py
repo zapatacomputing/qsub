@@ -226,8 +226,6 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]
-        print("requirement right before populate requirements: ", self.requirements)
-
         # Allot time discretization budget
         (
             quantum_sqrt_failure_tolerance,
@@ -300,7 +298,6 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
     def get_subnormalization(self):
         # Returns the normalization factor for the vector encoding the marked state
-        print(" in get subnormalization : ", self.requirements)
         number_of_spatial_grid_points = self.requirements[
             "number_of_spatial_grid_points"
         ]

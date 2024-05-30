@@ -46,7 +46,7 @@ class ObliviousAmplitudeAmplification(SubroutineModel):
 
     def populate_requirements_for_subroutines(self):
         # Populate requirements for state_preparation_oracle and mark_subspace
-
+        print("marked subspace in oa : ", self.mark_subspace)
         # Allocate failure tolerance
         allocation = 0.5
         consumed_failure_tolerance = allocation * self.requirements["failure_tolerance"]
