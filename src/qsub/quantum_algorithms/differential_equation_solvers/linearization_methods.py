@@ -114,7 +114,6 @@ class CarlemanBlockEncoding(GenericBlockEncoding):
         )
 
     def get_subnormalization(self):
-        # TODO: make these numbers variable inputs, possibly fed in through requirements
         carleman_truncation_level = 3
         ode_degree = 3
         if (
@@ -155,7 +154,6 @@ class CarlemanBlockEncoding(GenericBlockEncoding):
             self.block_encode_linear_term.count_encoding_qubits()
         )
 
-        # TODO: update this to find max over all ancilla counts
         max_number_of_ancillas_used_to_block_encode_terms = Max(
             self.block_encode_linear_term.count_block_encoding_ancilla_qubits()
         )

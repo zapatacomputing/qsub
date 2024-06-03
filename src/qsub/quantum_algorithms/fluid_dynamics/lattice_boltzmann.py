@@ -234,7 +234,7 @@ class LBMDragCoefficientsReflection(SubroutineModel):
             quantum_comparator_failure_tolerance,
         ) = consume_fraction_of_error_budget(0.5, remaining_failure_tolerance)
 
-        # TODO: finalize from Bhargav and update description
+
         self.quantum_adder.number_of_times_called = 2
         # Set quantum_adder requirements
         self.quantum_adder.set_requirements(
@@ -246,7 +246,6 @@ class LBMDragCoefficientsReflection(SubroutineModel):
             ),
         )
 
-        # TODO: finalize from Bhargav and update description
         self.quantum_comparator.number_of_times_called = 2
         # Set quantum_comparator requirements
         self.quantum_comparator.set_requirements(
@@ -320,7 +319,6 @@ class LBMDragCoefficientsReflection(SubroutineModel):
 
     def count_qubits(self):
         # From drag estimation paper
-        # TODO: update this to something more accurate
         number_of_bits_for_x_dimension = (
             compute_number_of_x_register_bits_for_coefficient_reflection(
                 number_of_spatial_grid_points=self.requirements[
@@ -574,7 +572,7 @@ class LBMQuadraticTermBlockEncoding(GenericBlockEncoding):
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the t_gate subroutine
 
-        log_n_spatial_qubits_squared = np.log2(self.requirements["number_of_spatial_grid_points"]**2)
+        log_n_spatial_qubits_squared = np.ceil(np.log2(self.requirements["number_of_spatial_grid_points"]**2))
         self.t_gate.number_of_times_called  = 8*log_n_spatial_qubits_squared + 5965*np.log2(5187/self.requirements["failure_tolerance"])
         -16 + 2* log_n_spatial_qubits_squared*(log_n_spatial_qubits_squared-1)
 
@@ -647,7 +645,7 @@ class LBMCubicTermBlockEncoding(GenericBlockEncoding):
 
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the t_gate subroutine
-        log_n_spatial_qubits_cubed = np.log2(self.requirements["number_of_spatial_grid_points"]**3)
+        log_n_spatial_qubits_cubed = np.ceil(np.log2(self.requirements["number_of_spatial_grid_points"]**3))
         self.t_gate.number_of_times_called  = 8*log_n_spatial_qubits_cubed + 39991*np.log2(34775/self.requirements["failure_tolerance"])
         -16 + 2* log_n_spatial_qubits_cubed*(log_n_spatial_qubits_cubed-1)
 
