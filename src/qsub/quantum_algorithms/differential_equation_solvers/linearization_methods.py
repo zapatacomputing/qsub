@@ -5,6 +5,7 @@ from qsub.utils import consume_fraction_of_error_budget
 from typing import Optional
 import warnings
 from sympy import symbols, Max, ceiling, log, Basic
+import numpy as np
 
 
 class CarlemanBlockEncoding(GenericBlockEncoding):
@@ -74,20 +75,21 @@ class CarlemanBlockEncoding(GenericBlockEncoding):
         # TODO: may eventually want the Carleman block encoding to consume some
         # failure tolerance based on the degree that it uses (or at some point we may want
         # to allow this degree to be set by this failure rate consumption)
+
         (
             linear_block_encoding_failure_tolerance,
             remaining_failure_tolerance,
-        ) = consume_fraction_of_error_budget(0.3, remaining_failure_tolerance)
+        ) = consume_fraction_of_error_budget(1/3, remaining_failure_tolerance)
 
         (
             quadratic_block_encoding_failure_tolerance,
             remaining_failure_tolerance,
-        ) = consume_fraction_of_error_budget(0.3, remaining_failure_tolerance)
+        ) = consume_fraction_of_error_budget(1/3, remaining_failure_tolerance)
 
         (
             cubic_block_encoding_failure_tolerance,
             remaining_failure_tolerance,
-        ) = consume_fraction_of_error_budget(0.3, remaining_failure_tolerance)
+        ) = consume_fraction_of_error_budget(1/3, remaining_failure_tolerance)
 
         # Set number of calls to the linear term block encoding
         self.block_encode_linear_term.number_of_times_called = 1
@@ -147,20 +149,49 @@ class CarlemanBlockEncoding(GenericBlockEncoding):
         return subnormalization
 
     def count_qubits(self):
-        # TODO: update this to use the number of qubits from the block encodings
+        carleman_truncation_level = 3
+        max_number_of_ancillas_used_to_block_encode_terms = Max(
+            self.block_encode_linear_term.count_block_encoding_ancilla_qubits(), 
+            self.block_encode_cubic_term.count_encoding_qubits(), 
+            self.block_encode_quadratic_term.count_encoding_qubits()
+
+        )
+        number_of_qubits = max_number_of_ancillas_used_to_block_encode_terms + 2*np.log2(carleman_truncation_level)
+        return number_of_qubits
+
+    def count_encoding_qubits(self):
         carleman_truncation_level = 3
         ode_degree = 3
+        max_number_of_ancillas_used_to_block_encode_terms = Max(
+        self.block_encode_linear_term.count_block_encoding_ancilla_qubits(), 
+        self.block_encode_cubic_term.count_encoding_qubits(), 
+        self.block_encode_quadratic_term.count_encoding_qubits()
+        )
         number_of_qubits_encoding_system = (
-            self.block_encode_linear_term.count_encoding_qubits()
+            self.block_encode_linear_term.count_encoding_qubits() +
+            self.block_encode_quadratic_term.count_encoding_qubits()+
+            self.block_encode_cubic_term.count_encoding_qubits()
         )
 
-        max_number_of_ancillas_used_to_block_encode_terms = Max(
-            self.block_encode_linear_term.count_block_encoding_ancilla_qubits()
-        )
         number_of_qubits = (
-            number_of_qubits_encoding_system * (carleman_truncation_level + ode_degree)
+            number_of_qubits_encoding_system * (carleman_truncation_level)
             + max_number_of_ancillas_used_to_block_encode_terms
-            + 3 * ceiling(log(carleman_truncation_level, 2))
-            + ceiling(log(ode_degree, 2))
+            + 3 * ceiling(np.log2(carleman_truncation_level))
+            + ceiling(np.log2(ode_degree))
         )
         return number_of_qubits
+            
+
+    
+    def count_block_encoding_ancilla_qubits(self):
+        carleman_truncation_level = 3
+        max_number_of_ancillas_used_to_block_encode_terms = Max(
+        self.block_encode_linear_term.count_block_encoding_ancilla_qubits(), 
+        self.block_encode_cubic_term.count_encoding_qubits(), 
+        self.block_encode_quadratic_term.count_encoding_qubits()
+        )
+        number_of_qubits = max_number_of_ancillas_used_to_block_encode_terms + 2*np.log2(carleman_truncation_level)
+        return number_of_qubits
+
+    def count_qubits(self):
+        return self.count_encoding_qubits() + self.count_block_encoding_ancilla_qubits()

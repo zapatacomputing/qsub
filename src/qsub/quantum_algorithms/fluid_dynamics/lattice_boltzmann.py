@@ -646,8 +646,13 @@ class LBMCubicTermBlockEncoding(GenericBlockEncoding):
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the t_gate subroutine
         log_n_spatial_qubits_cubed = np.ceil(np.log2(self.requirements["number_of_spatial_grid_points"]**3))
+        # From Collision Operators
         self.t_gate.number_of_times_called  = 8*log_n_spatial_qubits_cubed + 39991*np.log2(34775/self.requirements["failure_tolerance"])
-        -16 + 2* log_n_spatial_qubits_cubed*(log_n_spatial_qubits_cubed-1)
+        -16 + 2* log_n_spatial_qubits_cubed*(log_n_spatial_qubits_cubed-1) 
+        # From Streaming operators
+        self.t_gate.number_of_times_called += 12* np.ceil(np.log2(self.requirements["number_of_spatial_grid_points"]))  
+        + 187*np.ceil(np.log2(self.requirements["number_of_spatial_grid_points"])) - 272
+
 
         # Set t_gate requirements
         self.t_gate.set_requirements(
