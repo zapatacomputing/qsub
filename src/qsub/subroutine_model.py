@@ -2,26 +2,26 @@ from typing import Optional, Union
 from graphviz import Digraph
 
 from anytree import Node, RenderTree
-from anytree.exporter import DotExporter
 import plotly.graph_objects as go
 from sympy import symbols
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, asdict, is_dataclass
 
 
-class SubroutineModel:
-    def __init__(self, task_name: str, requirements: Optional[dict] = None, **kwargs):
+class SubroutineModel(ABC):
+    def __init__(self, task_name: str, **kwargs):
         self.task_name = task_name
-        self.requirements = requirements or {}
+        self.requirements = {}
+        self.inner_subroutine = None
         self.number_of_times_called: Optional[Union[float, int]] = None
         for attr, value in kwargs.items():
             if isinstance(value, SubroutineModel):
                 setattr(self, attr, value)
-
-    def set_requirements(self, *args, **kwargs):
-        if args:
-            raise TypeError(
-                "The set_requirements method expects keyword arguments of the form argument=value."
-            )
-        self.requirements = kwargs
+       
+    def set_requirements(self,requirements:dataclass):
+        assert is_dataclass(requirements)
+        self.requirements = asdict(requirements)
+        assert "failure_tolerance"  in self.requirements
 
     def populate_requirements_for_subroutines(self):
         pass
@@ -251,3 +251,7 @@ class SubroutineModel:
         )
 
         fig.show()
+
+    def delegate(self, inner_subroutine):
+        self.inner_subroutine  = inner_subroutine
+        return self

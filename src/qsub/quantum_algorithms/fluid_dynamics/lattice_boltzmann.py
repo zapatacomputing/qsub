@@ -2,6 +2,22 @@ from typing import Optional
 from ...subroutine_model import SubroutineModel
 from qsub.utils import consume_fraction_of_error_budget
 import warnings
+from dataclasses import dataclass
+
+@dataclass
+class LBMDragEstimationData:
+    failure_tolerance: float = 0
+    estimation_error: float = 0
+    estimated_drag_force: float = 0
+    evolution_time: float = 0
+    mu_P_A: float = 0
+    kappa_P: float = 0
+    norm_inhomogeneous_term_vector: float = 0
+    norm_x_t: float = 0
+    A_stable: bool = False
+    # Intialize subroutines as generic routines with task name
+    solve_quantum_ode: SubroutineModel =  SubroutineModel("solve_quantum_ode") 
+    mark_drag_vector: SubroutineModel = SubroutineModel("mark_drag_vector")
 
 
 class LBMDragEstimation(SubroutineModel):
@@ -18,47 +34,6 @@ class LBMDragEstimation(SubroutineModel):
         else:
             self.estimate_amplitude = SubroutineModel("estimate_amplitude")
 
-        # Initialize the sub-subtask requirements as generic subroutines with task names
-        self.requirements["solve_quantum_ode"] = SubroutineModel("solve_quantum_ode")
-        self.requirements["mark_drag_vector"] = SubroutineModel("mark_drag_vector")
-
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-        estimation_error: float = None,
-        estimated_drag_force: float = None,
-        evolution_time: float = None,
-        mu_P_A: float = None,
-        kappa_P: float = None,
-        norm_inhomogeneous_term_vector: float = None,
-        norm_x_t: float = None,
-        A_stable: bool = None,
-        solve_quantum_ode: Optional[SubroutineModel] = None,
-        mark_drag_vector: Optional[SubroutineModel] = None,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-
-        # Initialize the requirements attribute if it doesn't exist
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-
-        for k, v in args.items():
-            if k in self.requirements:
-                if not isinstance(self.requirements[k], SubroutineModel):
-                    self.requirements[k] = v
-            else:
-                self.requirements[k] = v if v is not None else SubroutineModel(k)
-
-        # Update the requirements with new values
-        self.requirements.update(args)
-
-        # Call the parent class's set_requirements method with the updated requirements
-        super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
         # Note: This subroutine consumes no failure probability.
@@ -114,7 +89,6 @@ class LBMDragEstimation(SubroutineModel):
     def count_qubits(self):
         return self.estimate_amplitude.count_qubits()
 
-
 class LBMDragReflection(SubroutineModel):
     def __init__(
         self,
@@ -129,25 +103,6 @@ class LBMDragReflection(SubroutineModel):
         else:
             self.compute_boundary = SubroutineModel("compute_boundary")
 
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        # Initialize the requirements attribute if it doesn't exist
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-
-        # Update the requirements with new values
-        self.requirements.update(args)
-
-        # Call the parent class's set_requirements method with the updated requirements
-        super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
         # Set number of calls to the quadratic term block encoding
@@ -162,7 +117,6 @@ class LBMDragReflection(SubroutineModel):
         # Returns the normalization factor for the vector encoding the marked state
         warnings.warn("This function is not fully implemented.", UserWarning)
         return 42
-
 
 class SphereBoundaryOracle(SubroutineModel):
     def __init__(
@@ -189,28 +143,6 @@ class SphereBoundaryOracle(SubroutineModel):
             self.quantum_square = quantum_square
         else:
             self.quantum_square = SubroutineModel("quantum_square")
-
-    def set_requirements(
-        self,
-        failure_tolerance: float = None,
-        radius: float = None,
-        grid_spacing: float = None,
-    ):
-        args = locals()
-        # Clean up the args dictionary before setting requirements
-        args.pop("self")
-        args = {
-            k: v for k, v in args.items() if v is not None and not k.startswith("__")
-        }
-        # Initialize the requirements attribute if it doesn't exist
-        if not hasattr(self, "requirements"):
-            self.requirements = {}
-
-        # Update the requirements with new values
-        self.requirements.update(args)
-
-        # Call the parent class's set_requirements method with the updated requirements
-        super().set_requirements(**self.requirements)
 
     def populate_requirements_for_subroutines(self):
         remaining_failure_tolerance = self.requirements["failure_tolerance"]

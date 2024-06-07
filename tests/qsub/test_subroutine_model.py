@@ -1,41 +1,72 @@
 import pytest
-
+from dataclasses import dataclass
 from qsub.subroutine_model import SubroutineModel
+from typing import Optional
 
 
-def test_init():
-    sub = SubroutineModel(task_name="TestTask")
+@pytest.fixture()
+def subroutinemodel():
+    class MockSubroutineModel(SubroutineModel):
+        def __init__(self, task_name: str, **kwargs):
+            super().__init__(task_name, **kwargs)
+        def populate_requirements_for_subroutines(self):
+            return super().populate_requirements_for_subroutines()
+
+    return MockSubroutineModel(task_name="TestTask")
+
+@pytest.fixture()
+def child_subroutine_1():
+    class MockSubroutineModel(SubroutineModel):
+        def __init__(self, task_name: str, requirements: Optional[dict] = None, **kwargs):
+            super().__init__(task_name, requirements, **kwargs)
+        def populate_requirements_for_subroutines(self):
+            return super().populate_requirements_for_subroutines()
+    return MockSubroutineModel(task_name="Task1")
+
+@pytest.fixture()
+def child_subroutine_2():
+    class MockSubroutineModel(SubroutineModel):
+        def __init__(self, task_name: str, requirements: Optional[dict] = None, **kwargs):
+            super().__init__(task_name, requirements, **kwargs)
+        def populate_requirements_for_subroutines(self):
+            return super().populate_requirements_for_subroutines()
+    return MockSubroutineModel(task_name="Task2")
+
+@pytest.fixture()
+def mock_data_class():
+    @dataclass
+    class SubroutineModelData:
+        field_1: float = 0
+        field_2: float = 1
+        failure_tolerance: float = 0.01
+    return SubroutineModelData()
+      
+def test_initializing_subroutine(subroutinemodel, mock_data_class):
+    sub = subroutinemodel
+    sub.set_requirements(mock_data_class)
     assert sub.task_name == "TestTask"
-    assert sub.requirements == {}
+    assert sub.requirements != {}
     assert sub.number_of_times_called is None
+    assert 'field_1' in sub.requirements.keys()
+    assert 'field_2' in sub.requirements.keys()
 
-    sub_with_reqs = SubroutineModel(task_name="TestTask", requirements={"req1": "val1"})
-    assert sub_with_reqs.requirements == {"req1": "val1"}
-
-
-def test_set_requirements():
-    sub = SubroutineModel(task_name="TestTask")
-    sub.set_requirements(req1="val1")
-    assert sub.requirements == {"req1": "val1"}
-
-    with pytest.raises(TypeError):
-        sub.set_requirements("invalid_arg")
-
-
-def test_count_subroutines():
-    sub = SubroutineModel(task_name="Main")
-    sub.sub1 = SubroutineModel(task_name="Sub1")
-    sub.sub2 = SubroutineModel(task_name="Sub2")
-
+def test_count_subroutines(subroutinemodel, child_subroutine_1 , child_subroutine_2):
+    sub = subroutinemodel
+    sub.sub1 = child_subroutine_1
+    sub.sub2 = child_subroutine_2
     counts = sub.count_subroutines()
-    assert counts == {"Main": 1, "Sub1": 1, "Sub2": 1}
+    print("number of counts: ", counts)
+    assert len(counts) == len({"TestTask": 1, " Task1": 1, " Task2": 1})
+    assert counts == {'TestTask': 1, 'Task1': 1, 'Task2': 1}
 
 
-def test_print_profile(capsys):
-    sub = SubroutineModel(task_name="Main", requirements={"req1": "val1"})
+def test_print_profile(capsys,subroutinemodel, mock_data_class):
+    sub = subroutinemodel
+    sub.set_requirements(mock_data_class)
     sub.print_profile()
 
     captured = capsys.readouterr()
-    assert "Subroutine: SubroutineModel (Task: Main)" in captured.out
+    print(captured)
+    assert "Subroutine: MockSubroutineModel (Task: TestTask)" in captured.out
     assert "Requirements:" in captured.out
-    assert "req1: val1" in captured.out
+    assert "field_1: 0" in captured.out
