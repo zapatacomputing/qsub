@@ -1,8 +1,6 @@
-import numpy as np
 from typing import Optional
-from .subroutine_model import SubroutineModel
 from sympy import symbols
-
+from qsub.subroutine_model import SubroutineModel
 
 class GenericBlockEncoding(SubroutineModel):
     def __init__(self, task_name: str, requirements: Optional[dict] = None, **kwargs):
