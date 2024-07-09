@@ -142,7 +142,8 @@ def generate_graphs(
     )
 
     # Run the solver and get the query count
-    drag_est.run_profile(verbose=True)
+    drag_est.run_profile(verbose=False)
+    drag_est.print_profile()
 
     counts = drag_est.count_subroutines()
 
@@ -150,7 +151,8 @@ def generate_graphs(
 
     return counts["t_gate"], n_qubits
 
-failure_tolerance_values = [0.0001,0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
+# failure_tolerance_values = [0.001, 0.01, 0.05]
+failure_tolerance_values = [0.01]
 grid_points = [5120.00, 5120000.00, 40960000000.00]
 fluid_nodes = [5.116*10**3,5.116*10*6, 4.093*10**10]
 evolution_times = [43.33 , 240.72 , 7703.04]
@@ -167,25 +169,34 @@ for error in failure_tolerance_values:
             fluid_nodes=n_fluid_nodes
             )
         resources[error].append((tcounts, qubits))
+
+# Increase font sizes
+plt.rcParams.update({'font.size': 12})  # General font size
+plt.rcParams.update({'axes.titlesize': 12})  # Title font size
+plt.rcParams.update({'axes.labelsize': 12})  # Axis labels font size
+plt.rcParams.update({'xtick.labelsize': 8})  # X-tick labels font size
+plt.rcParams.update({'ytick.labelsize': 12})  # Y-tick labels font size
+plt.rcParams.update({'legend.fontsize': 12})  # Legend font size
 # Dark colors for different tolerances
-dark_colors = ['#000000', '#00008B', '#006400', '#8B0000', '#008B8B', '#8B008B', '#FF8C00', '#4B0082', '#2F4F4F', '#800000']
+dark_colors = ['#000000', '#8B0000', '#00008B', '#006400', '#008B8B', '#8B008B', '#FF8C00', '#4B0082', '#2F4F4F', '#800000']
 markers = ['x', '+', 'v']
 # Tolerances and Reynolds numbers
 tolerances = list(resources.keys())
 reynolds_numbers = [1, 20, 500]
 
-# Plot
-fig, axes = plt.subplots(2, 1, figsize=(12, 12), sharex=True)
+
+
 
 # Plot T-gate Counts vs Failure Tolerance
+fig, axes = plt.subplots(2, 1, figsize=(12, 12), sharex=True)
 ax1 = axes[0]
 for tol_idx, tolerance in enumerate(tolerances):
     for reynolds_idx, reynolds in enumerate(reynolds_numbers):
         t_counts, num_qubits = resources[tolerance][reynolds_idx]
         ax1.scatter(tolerance, t_counts, color=dark_colors[reynolds_idx % len(dark_colors)], marker=markers[reynolds_idx % len(markers)], label=f'Re {reynolds}' if tol_idx == 0 else "")
 ax1.set_yscale('log')
-ax1.set_ylabel('T-gate Counts')
-ax1.set_title('T-gate Counts vs Failure Tolerance')
+ax1.set_ylabel('$T$ gate Counts')
+ax1.set_title('$T$ gate Counts vs Failure Tolerance')
 ax1.grid(True)
 ax1.legend(title='Legend')
 
@@ -201,21 +212,20 @@ ax2.set_ylabel('Number of Qubits')
 ax2.set_title('Number of Qubits vs Failure Tolerance')
 ax2.grid(True)
 ax2.legend(title='Legend')
-
 plt.tight_layout()
 plt.show()
 
 
 # Plot
-fig, axes = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
-fig.suptitle('T-counts * Number of Qubits vs. Number of Qubits for different Reynolds numbers')
+fig, axes2 = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
+fig.suptitle('$T$ gate counts  vs. Number of Qubits for different Reynolds numbers')
 
 # Dark colors for different tolerances
 dark_colors = ['#000000', '#00008B', '#006400', '#8B0000', '#008B8B', '#8B008B', '#FF8C00', '#4B0082', '#2F4F4F', '#800000']
 markers = ['x', 'o', '^', 's', 'p', '*', 'D', 'v', '<', '>']
 
 for i, reynolds in enumerate(reynolds_numbers):
-    ax = axes[i]
+    ax = axes2[i]
     for tol_idx, tolerance in enumerate(tolerances):
         t_counts, num_qubits = resources[tolerance][i]
         ax.scatter(num_qubits, t_counts, color=dark_colors[tol_idx], marker=markers[tol_idx], label=f'Tolerance={tolerance}')
@@ -225,8 +235,27 @@ for i, reynolds in enumerate(reynolds_numbers):
     ax.legend(title="Failure Tolerance")
     ax.grid(True)
 
-axes[0].set_ylabel('T-counts * Number of Qubits')
-fig.legend(loc='center right', bbox_to_anchor=(1.1, 0.5))
-
+axes2[0].set_ylabel('$T$ gate counts')
+# fig.legend(loc='center right', bbox_to_anchor=(1.1, 0.5))
 plt.tight_layout(rect=[0, 0, 1, 0.96])
 plt.show()
+
+fig, axes3 = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
+# # T counts * # of qubits vs qubits
+for i, reynolds in enumerate(reynolds_numbers):
+    ax = axes3[i]
+    for tol_idx, tolerance in enumerate(tolerances):
+        t_counts, num_qubits = resources[tolerance][i]
+        product_t_counts_num_qubits = t_counts*num_qubits
+        ax.scatter(num_qubits, product_t_counts_num_qubits, color=dark_colors[tol_idx], marker=markers[tol_idx], label=f'Tolerance={tolerance}')
+    ax.set_title(f'Reynolds={reynolds}')
+    ax.set_xlabel('Number of Qubits')
+    ax.set_yscale('log')
+    ax.legend(title="Failure Tolerance")
+    ax.grid(True)
+
+axes3[0].set_ylabel('$T$ counts $\\times$ Number of Logical Qubits')
+# fig.legend(loc='center right', bbox_to_anchor=(1.1, 0.5))
+plt.tight_layout(rect=[0, 0, 1, 0.96])# 
+plt.show()
+
