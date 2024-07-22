@@ -40,6 +40,9 @@ def generate_graphs(
     uniform_density_deviation = 0.001,
     fluid_nodes= 5.116*10**3
 ):
+    """Used to generate graphs in this paper https://arxiv.org/abs/2406.06323 Look at 
+       Table 7 for source of numerical constants.
+    """
 
     mu_P_A = -0.00001
     norm_inhomogeneous_term_vector = 0.0  # ODE is homogeneous

@@ -151,7 +151,7 @@ class TaylorQuantumODESolver(SubroutineModel):
 
     def get_subnormalization(self):
         # Returns the normalization factor for the vector encoding the solution state
-        NotImplementedError("THIS QUANTITY SHOULD BE COMPUTED FROM AN AMPLITUDE ESTIMATION !!")
+        NotImplementedError("THIS QUANTITY NOT NEEDED FOR lbm_drag_estimation.py !!")
 
 
 def get_state_preparation_overlap_of_ode_history_state(

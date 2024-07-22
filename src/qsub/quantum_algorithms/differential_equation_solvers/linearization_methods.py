@@ -116,7 +116,8 @@ class CarlemanBlockEncoding(GenericBlockEncoding):
         )
 
     def get_subnormalization(self):
-        carleman_truncation_level = 3
+        carleman_truncation_level = 3 # Chosen for this paper https://arxiv.org/abs/2406.06323
+
         ode_degree = 3
         if (
             isinstance(self.block_encode_linear_term.get_subnormalization(), Basic)
@@ -149,7 +150,8 @@ class CarlemanBlockEncoding(GenericBlockEncoding):
         return subnormalization
 
     def count_qubits(self):
-        carleman_truncation_level = 3
+        carleman_truncation_level = 3 # chosen for this paper https://arxiv.org/abs/2406.06323
+
         max_number_of_ancillas_used_to_block_encode_terms = Max(
             self.block_encode_linear_term.count_block_encoding_ancilla_qubits(), 
             self.block_encode_cubic_term.count_encoding_qubits(), 
@@ -160,7 +162,7 @@ class CarlemanBlockEncoding(GenericBlockEncoding):
         return number_of_qubits
 
     def count_encoding_qubits(self):
-        carleman_truncation_level = 3
+        carleman_truncation_level = 3 # chosen for this paper https://arxiv.org/abs/2406.06323
         ode_degree = 3
         max_number_of_ancillas_used_to_block_encode_terms = Max(
         self.block_encode_linear_term.count_block_encoding_ancilla_qubits(), 
@@ -184,7 +186,7 @@ class CarlemanBlockEncoding(GenericBlockEncoding):
 
     
     def count_block_encoding_ancilla_qubits(self):
-        carleman_truncation_level = 3
+        carleman_truncation_level = 3 # chosen for this paper https://arxiv.org/abs/2406.06323
         max_number_of_ancillas_used_to_block_encode_terms = Max(
         self.block_encode_linear_term.count_block_encoding_ancilla_qubits(), 
         self.block_encode_cubic_term.count_encoding_qubits(), 
