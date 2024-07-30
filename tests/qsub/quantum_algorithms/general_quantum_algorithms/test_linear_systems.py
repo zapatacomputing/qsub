@@ -1,6 +1,6 @@
 import pytest
-from src.qsub.subroutine_model import SubroutineModel
-from src.qsub.quantum_algorithms.general_quantum_algorithms.linear_systems import (
+from qsub.subroutine_model import SubroutineModel
+from qsub.quantum_algorithms.general_quantum_algorithms.linear_systems import (
     TaylorQLSA,
     get_taylor_qlsa_num_block_encoding_calls,
 )
@@ -8,8 +8,9 @@ from src.qsub.quantum_algorithms.general_quantum_algorithms.linear_systems impor
 
 def test_get_taylor_qlsa_num_block_encoding_calls_normal():
     # Test with normal parameters
-    result = get_taylor_qlsa_num_block_encoding_calls(0.1, 1.0, 4.0)
-    assert isinstance(result, float)
+    result_A, result_b = get_taylor_qlsa_num_block_encoding_calls(0.1, 1.0, 4.0)
+    assert isinstance(result_A, float)
+    assert isinstance(result_b, float)
 
 
 def test_get_taylor_qlsa_num_block_encoding_calls_invalid_failure_probability():
@@ -44,12 +45,10 @@ def test_taylor_qlsa_set_requirements():
     # Test set_requirements method
     taylor_qlsa = TaylorQLSA()
     taylor_qlsa.set_requirements(
-        failure_tolerance=0.1, subnormalization=1.0, condition_number=4.0
+        failure_tolerance=0.1,
     )
     assert taylor_qlsa.requirements == {
         "failure_tolerance": 0.1,
-        "subnormalization": 1.0,
-        "condition_number": 4.0,
     }
 
 
@@ -57,8 +56,27 @@ def test_taylor_qlsa_populate_requirements_for_subroutines():
     # Test populate_requirements_for_subroutines method
     taylor_qlsa = TaylorQLSA()
     taylor_qlsa.set_requirements(
-        failure_tolerance=0.1, subnormalization=1.0, condition_number=4.0
+        failure_tolerance=0.1,
     )
+
     taylor_qlsa.populate_requirements_for_subroutines()
+
+    # Define the expected set of symbol names
+    expected_symbols = {
+        "linear_system_block_encoding_condition_number",
+        "linear_system_block_encoding_subnormalization",
+    }
+
+    # Extract the symbol names from the expression
+    actual_symbols = {
+        str(symbol)
+        for symbol in taylor_qlsa.linear_system_block_encoding.number_of_times_called.free_symbols
+    }
+
+    # Assert that the actual symbols match the expected symbols
+    assert (
+        actual_symbols == expected_symbols
+    ), f"Expected symbols {expected_symbols}, but found {actual_symbols}"
+
     # Assertions to check the correct population of requirements
-    assert taylor_qlsa.linear_system_block_encoding.number_of_times_called > 0
+    # assert taylor_qlsa.linear_system_block_encoding.number_of_times_called > 0

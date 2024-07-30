@@ -1,6 +1,6 @@
 import pytest
-from src.qsub.subroutine_model import SubroutineModel
-from src.qsub.quantum_algorithms.gaussian_filtering_gsee import (
+from qsub.subroutine_model import SubroutineModel
+from qsub.quantum_algorithms.gaussian_filtering_gsee import (
     GF_LD_GSEE,
     get_gf_ld_gsee_max_evolution_time,
     get_gf_ld_gsee_num_circuit_repetitions,

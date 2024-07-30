@@ -1,5 +1,5 @@
 import pytest
-from src.qsub.quantum_algorithms.general_quantum_algorithms.amplitude_amplification import (
+from qsub.quantum_algorithms.general_quantum_algorithms.amplitude_amplification import (
     ObliviousAmplitudeAmplification,
     compute_number_of_grover_iterates_for_obl_amp,
     SubroutineModel,
