@@ -154,32 +154,30 @@ class LBMDragOperator(SubroutineModel):
         warnings.warn("This function is not fully implemented.", UserWarning)
         return 42
 
+    def count_qubits(self):
+        warnings.warn("This function is not fully implemented.", UserWarning)
+        return self.compute_boundary.count_qubits()
+
 
 class SphereBoundaryOracle(SubroutineModel):
     def __init__(
         self,
         task_name="compute_boundary",
         requirements=None,
-        quantum_adder: Optional[SubroutineModel] = None,
         quantum_comparator: Optional[SubroutineModel] = None,
-        quantum_square: Optional[SubroutineModel] = None,
+        quantum_sum_of_squares: Optional[SubroutineModel] = None,
     ):
         super().__init__(task_name, requirements)
 
-        if quantum_adder is not None:
-            self.quantum_adder = quantum_adder
+        if quantum_sum_of_squares is not None:
+            self.quantum_sum_of_squares = quantum_sum_of_squares
         else:
-            self.quantum_adder = SubroutineModel("quantum_adder")
+            self.quantum_sum_of_squares = SubroutineModel("quantum_sum_of_squares")
 
         if quantum_comparator is not None:
             self.quantum_comparator = quantum_comparator
         else:
             self.quantum_comparator = SubroutineModel("quantum_comparator")
-
-        if quantum_square is not None:
-            self.quantum_square = quantum_square
-        else:
-            self.quantum_square = SubroutineModel("quantum_square")
 
     def set_requirements(
         self,
@@ -208,34 +206,29 @@ class SphereBoundaryOracle(SubroutineModel):
 
         # Allot time discretization budget
         (
-            quantum_square_failure_tolerance,
-            remaining_failure_tolerance,
-        ) = consume_fraction_of_error_budget(0.5, remaining_failure_tolerance)
-        (
-            quantum_adder_failure_tolerance,
+            quantum_sum_of_squares_failure_tolerance,
             quantum_comparator_failure_tolerance,
         ) = consume_fraction_of_error_budget(0.5, remaining_failure_tolerance)
 
-        # Set number of calls to the quantum_adder: two for adding y^2 and z^2 to x^2
-        self.quantum_adder.number_of_times_called = 2
+        # Set number of calls to the quantum_sum_of_squares: one for adding x^2, y^2 and z^2
+        self.quantum_sum_of_squares.number_of_times_called = 1
 
-        # Set quantum_adder requirements
-        self.quantum_adder.set_requirements(
-            failure_tolerance=quantum_adder_failure_tolerance,
+        # Set quantum_sum_of_squares requirements
+        self.quantum_sum_of_squares.set_requirements(
+            failure_tolerance=quantum_sum_of_squares_failure_tolerance,
         )
 
         # Set number of calls to the quantum_comparator: two for comparing x^2+y^2+z^2 to r^2
-        self.quantum_adder.number_of_times_called = 1
+        self.quantum_sum_of_squares.number_of_times_called = 1
 
         # Set quantum_comparator requirements
-        self.quantum_adder.set_requirements(
+        self.quantum_sum_of_squares.set_requirements(
             failure_tolerance=quantum_comparator_failure_tolerance,
         )
 
-        # Set number of calls to the quantum_square: three for squaring x^2, y^2, and z^2
-        self.quantum_square.number_of_times_called = 3
-
-        # Set quantum_comparator requirements
-        self.quantum_square.set_requirements(
-            failure_tolerance=quantum_square_failure_tolerance,
+    def count_qubits(self):
+        # TODO: Not a direct addition of the two in the following
+        return (
+            self.quantum_sum_of_squares.count_qubits()
+            + self.quantum_comparator.count_qubits()
         )

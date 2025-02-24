@@ -97,7 +97,8 @@ def generate_graphs():
     for key, value in counts.items():
         print(f"'{key}': {value},")
 
-    print("qubits =", drag_est.count_qubits())
+    print("drag_est_qubits =", drag_est.count_qubits())
+    print("drag_op_qubits =", block_encode_drag_operator.count_qubits())
 
     graph = drag_est.display_hierarchy()
     graph.view()  # This will open the generated diagram
